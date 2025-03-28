@@ -1,0 +1,6 @@
+torch
+streamlit
+diffusers
+moviepy
+transformers
+toml
