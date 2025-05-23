@@ -161,3 +161,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# API Key for Google Gemini
+GEMINI_API_KEY = "AIzaSyCok9ZDKb3uNRcz2nIQBCvzrWPlAhT2WTI"
