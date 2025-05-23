@@ -1,4 +1,10 @@
-<div class="video-card">
+<div class="video-card"
+    data-video-id="{{ video.video_id }}"
+    data-title="{{ video.title|escapejs }}"
+    data-duration="{{ video.duration }}"
+    data-path="{{ video.file_path|escapejs }}"
+    data-suggestions="{{ video.suggestions_json }}">
+
     {% if video.thumbnail_url %}
         <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" loading="lazy">
     {% else %}
@@ -6,11 +12,13 @@
             <span>{{ video.title|slice:":1" }}</span>
         </div>
     {% endif %}
+
     <div class="card-content">
         <p title="{{ video.title }}">{{ video.title }}</p>
         <div class="card-actions">
-            <button class="card-btn play-btn" onclick="playVideoInModal('{{ video.file_path|escapejs }}')">Play</button>
-            <button class="card-btn use-btn" onclick="reuseVideo('{{ video.title|escapejs }}', '{{ video.duration }}', '{{ video.file_path|escapejs }}')">Use</button>
+            <button class="card-btn play-btn" onclick="playVideoInModal(this)">Play</button>
+            <button class="card-btn use-btn" onclick="reuseVideo(this)">Use</button>
+            <button class="card-btn delete-btn" onclick="confirmDeleteVideo(this)">Delete</button>
         </div>
     </div>
 </div>

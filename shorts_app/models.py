@@ -6,14 +6,15 @@ class DownloadedVideo(models.Model):
     title = models.CharField(max_length=255)
     duration = models.IntegerField()
     file_path = models.CharField(max_length=512)
-    # --- ADD THIS LINE ---
     thumbnail_url = models.URLField(max_length=1024, blank=True, null=True)
+    # --- ADD THIS LINE TO STORE SUGGESTIONS ---
+    suggestions = models.JSONField(null=True, blank=True)
     downloaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} ({self.video_id})"
 
-# This model is for the upload quota feature
+# The YouTubeUpload model remains unchanged
 class YouTubeUpload(models.Model):
     video_title = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(default=timezone.now)

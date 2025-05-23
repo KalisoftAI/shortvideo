@@ -5,46 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Factory</title>
     <style>
-        :root { --primary-color: #4a90e2; --secondary-color: #50e3c2; --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333; }
+        :root { --primary-color: #4a90e2; --secondary-color: #50e3c2; --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333; --error-color: #e74c3c; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
         .page-header { display: flex; align-items: center; max-width: 800px; margin: 0 auto 20px auto; }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 24px; color: var(--primary-color); }
         .logo svg { width: 40px; height: 40px; }
         .container { background-color: var(--card-bg); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 800px; margin: auto; }
-        h1, h2 { color: #2c3e50; text-align: center; }
+        h2 { color: #2c3e50; text-align: center; }
         .section { margin-bottom: 30px; border-bottom: 1px solid #e0e0e0; padding-bottom: 30px; }
         .section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        label { font-weight: 600; color: #555; }
+        input[type="text"] { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
         button { background-color: var(--primary-color); color: white; padding: 14px 22px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         button:hover:not(:disabled) { background-color: #357abd; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
         .hidden { display: none; }
-        #video_url { padding: 16px; font-size: 17px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa; transition: all 0.3s; }
-        #video_url:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2); }
+        #video_url { padding: 16px; font-size: 17px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa; }
         .format-options { display: flex; gap: 20px; justify-content: flex-start; margin: 10px 0; }
+        .progress-container { margin-top: 15px; }
+        .progress-container progress { width: 100%; }
+        .status-message { text-align:center; font-weight: 500; }
+        .status-message.error { color: var(--error-color); }
 
-        /* Marquee Scroller */
         .recent-videos-wrapper { padding: 20px 0; }
-        .marquee { overflow: hidden; position: relative; width: 100%; -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); }
-        .marquee-content { display: flex; width: fit-content; animation: scroll 40s linear infinite; }
-        .marquee:hover .marquee-content { animation-play-state: paused; }
-        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .video-card { flex: 0 0 220px; margin: 0 10px; border-radius: 12px; overflow: hidden; transition: all 0.3s; background: var(--card-bg); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .video-card img { width: 100%; height: 120px; object-fit: cover; background-color: #eee; }
+        .scroller { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin; scrollbar-color: #ccc var(--bg-color); }
+        .scroller::-webkit-scrollbar { height: 10px; }
+        .scroller::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
+        .scroller::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
+        .video-card { flex: 0 0 220px; border-radius: 12px; overflow: hidden; background: var(--card-bg); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .video-card img { width: 100%; height: 120px; object-fit: cover; background-color: #e9ecef;}
         .video-card .card-content { padding: 12px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .video-card p { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; }
+        .video-card p { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
         .video-card .card-actions { display: flex; gap: 10px; justify-content: center; }
-        .card-btn { font-size: 14px; padding: 6px 12px; }
+        .card-btn { font-size: 13px; padding: 5px 10px; cursor: pointer; flex-grow: 1; }
         .use-btn { background-color: var(--secondary-color); }
-        .use-btn:hover { background-color: #48c9b0; }
+        .delete-btn { background-color: #e74c3c; }
+        .suggested-clips { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .clip-box { background: #eaf2f8; padding: 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .clip-box:hover { background-color: #d1e3f3; }
+        .clip-box p { font-size: 15px; margin: 0 0 5px 0;}
 
-        /* Thumbnail Placeholder */
-        .placeholder-thumbnail { width: 100%; height: 120px; background: linear-gradient(45deg, #e0e0e0, #f0f0f0); display: flex; align-items: center; justify-content: center; }
-        .placeholder-thumbnail span { font-size: 48px; font-weight: bold; color: #aaa; }
-
-        /* Video Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; max-width: 90%; max-height: 90%; position: relative; }
-        .modal-close { position: absolute; top: -15px; right: -15px; background: white; border-radius: 50%; width: 30px; height: 30px; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; position: relative; }
+        .modal-close { position: absolute; top: -15px; right: -15px; background: white; border-radius: 50%; width: 30px; height: 30px; border: none; font-size: 20px; cursor: pointer; }
         .modal-video { max-width: 80vw; max-height: 80vh; }
     </style>
 </head>
@@ -63,26 +67,23 @@
                 <label for="video_url">YouTube Link</label>
                 <input type="text" id="video_url" placeholder="Paste a YouTube video URL here">
             </div>
-            <div class="input-group">
-                <label>Desired Output Format</label>
-                <div class="format-options">
-                    <label><input type="radio" name="video_format_initial" value="short" checked> Short (9:16)</label>
-                    <label><input type="radio" name="video_format_initial" value="standard"> Standard (16:9)</label>
-                </div>
-            </div>
             <button id="downloadBtn">Download & Analyze</button>
             <div id="downloadProgress" class="progress-container hidden">
-                <p id="downloadStatus" style="text-align:center; font-weight: 500;"></p>
-                <progress id="downloadProgressBar" value="0" max="100"></progress>
+                <p id="downloadStatus" class="status-message"></p>
+                <progress id="downloadProgressBar" value="0" max="100" style="width:100%"></progress>
             </div>
         </div>
 
         <div class="recent-videos-wrapper section">
-            <h2>Or, pick up where you left off...</h2>
-            <div class="marquee">
-                <div class="marquee-content">
-                    {% if recent_videos %}{% for video in recent_videos %}{% include "shorts_app/video_card.html" %}{% endfor %}{% for video in recent_videos %}{% include "shorts_app/video_card.html" %}{% endfor %}{% endif %}
-                </div>
+            <h2>Or, Pick Up Where You Left Off...</h2>
+            <div class="scroller">
+                {% if recent_videos %}
+                    {% for video in recent_videos %}
+                        {% include "shorts_app/video_card.html" %}
+                    {% endfor %}
+                {% else %}
+                    <p>No recent videos processed yet.</p>
+                {% endif %}
             </div>
         </div>
 
@@ -100,150 +101,257 @@
     <template id="generate-template">
         <h2>2. Create Your Clip</h2>
         <p><strong>Title:</strong> <span class="video-title"></span></p>
+
         <div class="suggested-clips"></div>
+
         <div class="input-group" style="margin-top: 20px;">
-            <label>Or Trim Manually</label>
+            <label>Manual Trim</label>
             <div style="display: flex; gap: 15px;">
                 <input type="text" class="start-time" placeholder="Start (MM:SS)">
                 <input type="text" class="end-time" placeholder="End (MM:SS)">
             </div>
         </div>
+
+        <div class="input-group">
+            <label>Output Format</label>
+            <div class="format-options">
+                <label><input type="radio" name="video_format_output" value="short" checked> Short (9:16)</label>
+                <label><input type="radio" name="video_format_output" value="standard"> Standard (16:9)</label>
+            </div>
+        </div>
+
         <button class="generate-btn">Generate Video</button>
         <div class="generate-progress progress-container hidden">
-            <p class="generate-status" style="text-align:center; font-weight: 500;"></p>
-            <progress class="generate-progress-bar" value="0" max="100"></progress>
+            <p class="generate-status status-message"></p>
+            <progress class="generate-progress-bar" value="0" max="100" style="width:100%"></progress>
         </div>
     </template>
+
     <template id="output-template">
-        </template>
+         <h2>3. Your Video is Ready!</h2>
+        <video class="generated-video" controls style="width: 100%; border-radius: 8px;"></video>
+        <a class="final-download-link" download><button style="width: 100%; margin-top: 15px;">Download Video</button></a>
+    </template>
 
     <script>
         const get = id => document.getElementById(id);
         const csrfToken = '{{ csrf_token }}';
         let downloadedVideoData = null;
 
-        // --- Modal Functions ---
-        const playVideoInModal = (videoPath) => {
-            get('modalVideoPlayer').src = videoPath;
-            get('videoModal').style.display = 'flex';
-        };
-        const closeModal = () => {
-            get('modalVideoPlayer').pause();
-            get('modalVideoPlayer').src = '';
-            get('videoModal').style.display = 'none';
-        };
+        function setButtonState(button, disabled, text = null) {
+            button.disabled = disabled;
+            if (text) button.textContent = text;
+        }
 
-        // --- Job Polling & UI ---
-        const pollJobStatus = (jobId, progressDiv, progressBar, statusP, onComplete) => {
+        function pollJobStatus(jobId, progressDiv, progressBar, statusP, onComplete) {
             progressDiv.style.display = 'block';
             const interval = setInterval(async () => {
-                const response = await fetch(`/check_job_status/?job_id=${jobId}`);
-                const data = await response.json();
-                if (data.status === 'not_found') return;
-                statusP.textContent = data.message;
-                progressBar.value = data.progress;
-                if (data.status === 'completed' || data.status === 'failed') {
+                try {
+                    const response = await fetch(`/check_job_status/?job_id=${jobId}`);
+                    if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+                    const data = await response.json();
+
+                    statusP.textContent = data.message;
+                    progressBar.value = data.progress;
+                    statusP.classList.remove('error');
+
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        clearInterval(interval);
+                        if (data.status === 'completed') {
+                            onComplete(data.result);
+                        } else {
+                            statusP.textContent = `Error: ${data.message}`;
+                            statusP.classList.add('error');
+                            // Re-enable the relevant button on failure
+                            if(jobId.startsWith('download')) setButtonState(get('downloadBtn'), false, 'Download & Analyze');
+                            if(jobId.startsWith('generate')) setButtonState(document.querySelector('.generate-btn'), false, 'Generate Video');
+                        }
+                    }
+                } catch (error) {
                     clearInterval(interval);
-                    progressDiv.style.display = 'none';
-                    if (data.status === 'completed') onComplete(data.result);
+                    statusP.textContent = 'Error polling status. Check console for details.';
+                    statusP.classList.add('error');
+                    console.error("Polling error:", error);
                 }
             }, 2000);
-        };
+        }
 
-        const populateGenerateUI = (data) => {
+        function secondsToMMSS(secs) {
+            const minutes = Math.floor(secs / 60).toString().padStart(2, '0');
+            const seconds = (secs % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function populateGenerateUI(data) {
             const generateSection = get('generateSection');
             const template = get('generate-template').content.cloneNode(true);
             generateSection.innerHTML = '';
             generateSection.appendChild(template);
 
             downloadedVideoData = data;
-            generateSection.querySelector('.video-title').textContent = data.video_title;
-            const end = data.video_duration;
-            generateSection.querySelector('.end-time').value = `${Math.floor(end/60).toString().padStart(2, '0')}:${(end%60).toString().padStart(2, '0')}`;
+            const startInput = generateSection.querySelector('.start-time');
+            const endInput = generateSection.querySelector('.end-time');
 
-            // **FIXED**: Correctly populate suggestions
+            generateSection.querySelector('.video-title').textContent = data.video_title;
+
+            // --- USABILITY IMPROVEMENT ---
+            // Default to a 60 second clip from the start, or the full duration if shorter.
+            const duration = parseInt(data.video_duration, 10);
+            startInput.value = '00:00';
+            endInput.value = secondsToMMSS(Math.min(duration, 60));
+
             const clipsContainer = generateSection.querySelector('.suggested-clips');
             if (data.suggested_clips && data.suggested_clips.length > 0) {
-                clipsContainer.innerHTML = '<h3>Suggestions</h3>';
+                clipsContainer.innerHTML = '<h3>Suggestions (Click to use)</h3>';
                 data.suggested_clips.forEach(clip => {
                     const box = document.createElement('div');
-                    box.className = 'clip-box'; // Add styles for this class if needed
-                    box.innerHTML = `<p>${clip.description}</p><small>(${clip.start} - ${clip.end})</small>`;
+                    box.className = 'clip-box';
+                    box.innerHTML = `<p>${clip.description || 'Suggested Clip'}</p><small>(${(clip.start || '00:00')} - ${(clip.end || '00:00')})</small>`;
                     box.onclick = () => {
-                        generateSection.querySelector('.start-time').value = clip.start;
-                        generateSection.querySelector('.end-time').value = clip.end;
+                        startInput.value = clip.start || '00:00';
+                        endInput.value = clip.end || '00:00';
                     };
                     clipsContainer.appendChild(box);
                 });
             } else {
-                clipsContainer.innerHTML = ''; // Clear if no suggestions
+                clipsContainer.innerHTML = '<p><em>No specific clip suggestions. Please use manual trim.</em></p>';
             }
 
+            get('outputSection').classList.add('hidden');
             generateSection.classList.remove('hidden');
             generateSection.querySelector('.generate-btn').addEventListener('click', handleGenerateClick);
-        };
+        }
 
-        const reuseVideo = (title, duration, path) => {
-            populateGenerateUI({
-                video_title: title,
-                video_duration: parseInt(duration),
-                video_path: path,
-                suggested_clips: [] // Re-analyze to get suggestions
-            });
-            window.scrollTo({ top: get('downloadSection').offsetHeight, behavior: 'smooth' });
-        };
+        function reuseVideo(buttonElement) {
+            const card = buttonElement.closest('.video-card');
+            const suggestions = JSON.parse(card.dataset.suggestions || '[]');
+            const payload = {
+                video_title: card.dataset.title,
+                video_duration: parseInt(card.dataset.duration),
+                video_path: card.dataset.path,
+                suggested_clips: suggestions
+            };
+            populateGenerateUI(payload);
+            get('generateSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
-        get('downloadBtn').addEventListener('click', async () => {
-            const videoUrl = get('video_url').value;
-            if (!videoUrl) return;
-            const response = await fetch('/start_download_job/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ video_url: videoUrl })
-            });
-            const data = await response.json();
-            if (data.status === 'success') {
-                pollJobStatus(get('downloadBtn').nextElementSibling, get('downloadProgressBar'), get('downloadStatus'), populateGenerateUI);
-            }
-        });
-
-        const handleGenerateClick = async () => {
+        async function handleGenerateClick(event) {
+            const generateBtn = event.target;
             const generateSection = get('generateSection');
-            // Read format from Step 1
-            const videoFormat = document.querySelector('input[name="video_format_initial"]:checked').value;
-
             const payload = {
                 video_path: downloadedVideoData.video_path,
                 start_time: generateSection.querySelector('.start-time').value,
                 end_time: generateSection.querySelector('.end-time').value,
-                video_format: videoFormat
+                video_format: generateSection.querySelector('input[name="video_format_output"]:checked').value
             };
-            const response = await fetch('/start_generate_job/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            if (data.status === 'success') {
-                pollJobStatus(
-                    generateSection.querySelector('.generate-progress'),
-                    generateSection.querySelector('.generate-progress-bar'),
-                    generateSection.querySelector('.generate-status'),
-                    (result) => {
-                        const outputSection = get('outputSection');
-                        const template = get('output-template').content.cloneNode(true);
-                        outputSection.innerHTML = '';
-                        outputSection.appendChild(template);
-                        outputSection.querySelector('.generated-video').src = result.short_url;
-                        outputSection.querySelector('.final-download-link').href = result.short_url;
-                        outputSection.classList.remove('hidden');
-                        // updateQuotaDisplay();
-                    }
-                );
-            }
-        };
 
-        // document.addEventListener('DOMContentLoaded', updateQuotaDisplay);
+            // Basic validation
+            if (!payload.start_time || !payload.end_time) {
+                alert("Please enter both a start and end time.");
+                return;
+            }
+
+            setButtonState(generateBtn, true, 'Generating...');
+            get('outputSection').classList.add('hidden');
+
+            const progressDiv = generateSection.querySelector('.generate-progress');
+            const progressBar = generateSection.querySelector('.generate-progress-bar');
+            const statusP = generateSection.querySelector('.generate-status');
+
+            try {
+                const response = await fetch('/start_generate_job/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    pollJobStatus(data.job_id, progressDiv, progressBar, statusP, (result) => {
+                        const outputSection = get('outputSection');
+                        outputSection.innerHTML = get('output-template').innerHTML; // Re-inject template
+                        if (result && result.short_url) {
+                            outputSection.querySelector('.generated-video').src = result.short_url;
+                            outputSection.querySelector('.final-download-link').href = result.short_url;
+                            outputSection.classList.remove('hidden');
+                        } else {
+                            statusP.textContent = "Error: Generated video URL not found in result.";
+                            statusP.classList.add('error');
+                        }
+                        setButtonState(generateBtn, false, 'Generate Video');
+                    });
+                } else {
+                    statusP.textContent = `Error starting generation: ${data.message || 'Unknown error'}`;
+                    statusP.classList.add('error');
+                    setButtonState(generateBtn, false, 'Generate Video');
+                }
+            } catch (error) {
+                statusP.textContent = 'Failed to send request to server.';
+                statusP.classList.add('error');
+                setButtonState(generateBtn, false, 'Generate Video');
+            }
+        }
+
+        get('downloadBtn').addEventListener('click', async (event) => {
+            const downloadBtn = event.target;
+            const videoUrl = get('video_url').value;
+            if (!videoUrl) { alert("Please enter a YouTube video URL."); return; }
+
+            setButtonState(downloadBtn, true, 'Starting...');
+            get('generateSection').classList.add('hidden');
+            get('outputSection').classList.add('hidden');
+
+            const progressDiv = get('downloadProgress');
+            const progressBar = get('downloadProgressBar');
+            const statusP = get('downloadStatus');
+
+            try {
+                const response = await fetch('/start_download_job/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ video_url: videoUrl })
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    pollJobStatus(data.job_id, progressDiv, progressBar, statusP, (result) => {
+                        populateGenerateUI(result);
+                        setButtonState(downloadBtn, false, 'Download & Analyze');
+                    });
+                } else {
+                    statusP.textContent = `Error starting download: ${data.message || 'Unknown error'}`;
+                    statusP.classList.add('error');
+                    setButtonState(downloadBtn, false, 'Download & Analyze');
+                }
+            } catch (error) {
+                 statusP.textContent = 'Failed to send request to server.';
+                 statusP.classList.add('error');
+                 setButtonState(downloadBtn, false, 'Download & Analyze');
+            }
+        });
+
+        async function confirmDeleteVideo(buttonElement) {
+            const card = buttonElement.closest('.video-card');
+            const videoId = card.dataset.videoId;
+            const videoTitle = card.dataset.title;
+
+            if (confirm(`Are you sure you want to delete "${videoTitle}"? This cannot be undone.`)) {
+                try {
+                    const response = await fetch(`/delete_video/${videoId}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        card.remove();
+                    } else {
+                        alert(`Error: ${data.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error deleting video:', error);
+                    alert('An error occurred while trying to delete the video.');
+                }
+            }
+        }
     </script>
 </body>
 </html>
