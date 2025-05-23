@@ -51,6 +51,41 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+# In your project's settings.py
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple", # Use the 'simple' formatter
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO", # Or "WARNING" to reduce noise from Django itself
+            "propagate": True,
+        },
+        "shorts_app": { # Name of your Django app
+            "handlers": ["console"],
+            "level": "DEBUG", # Set to DEBUG to see all log levels (DEBUG, INFO, WARNING, ERROR)
+            "propagate": True,
+        },
+    },
+}
 ROOT_URLCONF = 'shorts_project.urls'
 
 TEMPLATES = [
