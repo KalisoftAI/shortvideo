@@ -1,0 +1,16 @@
+<div class="video-card">
+    {% if video.thumbnail_url %}
+        <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" loading="lazy">
+    {% else %}
+        <div class="placeholder-thumbnail">
+            <span>{{ video.title|slice:":1" }}</span>
+        </div>
+    {% endif %}
+    <div class="card-content">
+        <p title="{{ video.title }}">{{ video.title }}</p>
+        <div class="card-actions">
+            <button class="card-btn play-btn" onclick="playVideoInModal('{{ video.file_path|escapejs }}')">Play</button>
+            <button class="card-btn use-btn" onclick="reuseVideo('{{ video.title|escapejs }}', '{{ video.duration }}', '{{ video.file_path|escapejs }}')">Use</button>
+        </div>
+    </div>
+</div>
