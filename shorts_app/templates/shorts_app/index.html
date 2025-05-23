@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Shorts Creator</title>
+    <style>
+        /* Soft color combination and engaging UI */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray */
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            color: #4CAF50; /* Green */
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .message.success {
+            background-color: #e6ffed; /* Light green */
+            color: #28a745; /* Dark green */
+        }
+        .message.error {
+            background-color: #ffe6e6; /* Light red */
+            color: #dc3545; /* Dark red */
+        }
+        .result-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        .result-section h2 {
+            color: #6c757d;
+        }
+        .video-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .trim-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .trim-option-box {
+            background-color: #e0f2f7; /* Light cyan */
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #cce7ee;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 180px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .trim-option-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .manual-trim {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            background-color: #fdfdfd;
+        }
+        .manual-trim .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        .manual-trim .input-group label {
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        .short-output {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .short-output video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 15px;
+        }
+        .short-output img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 15px;
+        }
+        .download-button {
+            margin-top: 20px;
+            background-color: #007bff; /* Blue */
+        }
+        .download-button:hover {
+            background-color: #0056b3;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Shorts Creator</h1>
+
+        <form id="videoForm">
+            <label for="video_url">YouTube Video Link:</label>
+            <input type="text" id="video_url" name="video_url" placeholder="Paste YouTube video URL here" required>
+            <button type="submit">Download & Analyze Video</button>
+        </form>
+
+        <div id="message" class="message" style="display: none;"></div>
+        <div class="loader" id="loader"></div>
+
+        <div id="videoDetails" class="result-section" style="display: none;">
+            <h2>Video Details & Trim Options</h2>
+            <div class="video-details">
+                <p><strong>Title:</strong> <span id="videoTitle"></span></p>
+                <p><strong>Duration:</strong> <span id="videoDuration"></span> seconds</p>
+            </div>
+
+            <h3>Suggested Clips (Most Viewed - *Dummy for now*)</h3>
+            <div class="trim-options" id="suggestedClipsContainer">
+                </div>
+
+            <div class="manual-trim">
+                <h3>Manual Trim</h3>
+                <div class="input-group">
+                    <label for="start_time">Start Time (MM:SS or HH:MM:SS):</label>
+                    <input type="text" id="start_time" placeholder="e.g., 00:10" value="00:00">
+                </div>
+                <div class="input-group">
+                    <label for="end_time">End Time (MM:SS or HH:MM:SS):</label>
+                    <input type="text" id="end_time" placeholder="e.g., 00:25">
+                </div>
+                <div class="input-group">
+                    <label for="add_thumbnail">Add Thumbnail:</label>
+                    <input type="checkbox" id="add_thumbnail" checked>
+                </div>
+                <div class="input-group">
+                    <label for="tags">Tags (comma-separated):</label>
+                    <input type="text" id="tags" placeholder="e.g., vlogs,travel,fun">
+                </div>
+                <button id="generateShortBtn">Generate Short</button>
+            </div>
+        </div>
+
+        <div id="shortOutput" class="result-section" style="display: none;">
+            <h2>Your Generated Short</h2>
+            <video id="generatedVideo" controls style="display: none;"></video>
+            <img id="generatedThumbnail" style="display: none; max-height: 200px; object-fit: contain;">
+            <a id="downloadLink" class="download-button" style="display: none;">Download Short</a>
+        </div>
+    </div>
+
+    <script>
+        const videoForm = document.getElementById('videoForm');
+        const messageDiv = document.getElementById('message');
+        const loader = document.getElementById('loader');
+        const videoDetailsDiv = document.getElementById('videoDetails');
+        const videoTitleSpan = document.getElementById('videoTitle');
+        const videoDurationSpan = document.getElementById('videoDuration');
+        const suggestedClipsContainer = document.getElementById('suggestedClipsContainer');
+        const generateShortBtn = document.getElementById('generateShortBtn');
+        const start_time_input = document.getElementById('start_time');
+        const end_time_input = document.getElementById('end_time');
+        const add_thumbnail_checkbox = document.getElementById('add_thumbnail');
+        const tags_input = document.getElementById('tags');
+        const shortOutputDiv = document.getElementById('shortOutput');
+        const generatedVideo = document.getElementById('generatedVideo');
+        const generatedThumbnail = document.getElementById('generatedThumbnail');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let currentVideoPath = ''; // To store the path of the downloaded video
+
+        videoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const videoUrl = document.getElementById('video_url').value;
+
+            showMessage('Downloading and analyzing video...', 'info');
+            showLoader();
+            videoDetailsDiv.style.display = 'none';
+            shortOutputDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/process_video/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken') // Django CSRF token
+                    },
+                    body: `video_url=${encodeURIComponent(videoUrl)}`
+                });
+                const data = await response.json();
+
+                hideLoader();
+                if (data.status === 'success') {
+                    showMessage(data.message, 'success');
+                    videoDetailsDiv.style.display = 'block';
+                    videoTitleSpan.textContent = data.video_title;
+                    videoDurationSpan.textContent = data.video_duration;
+                    currentVideoPath = data.video_path; // Store the video path
+
+                    // Populate suggested clips
+                    suggestedClipsContainer.innerHTML = '';
+                    data.suggested_clips.forEach(clip => {
+                        const clipBox = document.createElement('div');
+                        clipBox.classList.add('trim-option-box');
+                        clipBox.innerHTML = `
+                            <p>${clip.description}</p>
+                            <small>(${clip.start} - ${clip.end})</small>
+                        `;
+                        clipBox.addEventListener('click', () => {
+                            start_time_input.value = clip.start;
+                            end_time_input.value = clip.end;
+                        });
+                        suggestedClipsContainer.appendChild(clipBox);
+                    });
+
+                    // Set default end time to video duration
+                    const totalMinutes = Math.floor(data.video_duration / 60);
+                    const totalSeconds = data.video_duration % 60;
+                    end_time_input.value = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+
+
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                hideLoader();
+                showMessage('An error occurred. Please try again.', 'error');
+                console.error('Fetch error:', error);
+            }
+        });
+
+        generateShortBtn.addEventListener('click', async () => {
+            if (!currentVideoPath) {
+                showMessage('Please download a video first.', 'error');
+                return;
+            }
+
+            const start_time = start_time_input.value;
+            const end_time = end_time_input.value;
+            const add_thumbnail = add_thumbnail_checkbox.checked;
+            const tags = tags_input.value;
+
+            showMessage('Generating short...', 'info');
+            showLoader();
+            shortOutputDiv.style.display = 'none';
+            generatedVideo.style.display = 'none';
+            generatedThumbnail.style.display = 'none';
+            downloadLink.style.display = 'none';
+
+
+            try {
+                const response = await fetch('/generate_short/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        video_path: currentVideoPath,
+                        start_time: start_time,
+                        end_time: end_time,
+                        add_thumbnail: add_thumbnail,
+                        tags: tags
+                    })
+                });
+                const data = await response.json();
+
+                hideLoader();
+                if (data.status === 'success') {
+                    showMessage(data.message, 'success');
+                    shortOutputDiv.style.display = 'block';
+                    generatedVideo.src = data.short_url;
+                    generatedVideo.style.display = 'block';
+                    downloadLink.href = data.short_url; // Direct download link
+                    downloadLink.style.display = 'block';
+                    if (data.thumbnail_url) {
+                        generatedThumbnail.src = data.thumbnail_url;
+                        generatedThumbnail.style.display = 'block';
+                    } else {
+                        generatedThumbnail.style.display = 'none';
+                    }
+
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                hideLoader();
+                showMessage('An error occurred during short generation. Please try again.', 'error');
+                console.error('Generate short error:', error);
+            }
+        });
+
+        function showMessage(msg, type) {
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        function showLoader() {
+            loader.style.display = 'block';
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+
+        // Function to get CSRF token (required for POST requests in Django)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
