@@ -12,3 +12,4 @@ venv/
 *.py[cod]
 media/
 staticfiles/
+client_secret.json
