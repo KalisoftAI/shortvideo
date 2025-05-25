@@ -3,406 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Shorts Creator</title>
+    <title>Short Video Generator</title>
     <style>
-        /* Soft color combination and engaging UI */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f4f8; /* Light blue-gray */
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 800px;
-            animation: fadeIn 0.8s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        h1 {
-            color: #4CAF50; /* Green */
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        label {
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"], input[type="number"] {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus, input[type="number"]:focus {
-            border-color: #4CAF50;
-            outline: none;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-        button:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-        .message {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-        }
-        .message.success {
-            background-color: #e6ffed; /* Light green */
-            color: #28a745; /* Dark green */
-        }
-        .message.error {
-            background-color: #ffe6e6; /* Light red */
-            color: #dc3545; /* Dark red */
-        }
-        .result-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            text-align: center;
-        }
-        .result-section h2 {
-            color: #6c757d;
-        }
-        .video-details {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .trim-options {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .trim-option-box {
-            background-color: #e0f2f7; /* Light cyan */
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #cce7ee;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            width: 180px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .trim-option-box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .manual-trim {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px dashed #ccc;
-            border-radius: 8px;
-            background-color: #fdfdfd;
-        }
-        .manual-trim .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-        .manual-trim .input-group label {
-            margin-right: 5px;
-            white-space: nowrap;
-        }
-        .short-output {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .short-output video {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 15px;
-        }
-        .short-output img {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 15px;
-        }
-        .download-button {
-            margin-top: 20px;
-            background-color: #007bff; /* Blue */
-        }
-        .download-button:hover {
-            background-color: #0056b3;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none; /* Hidden by default */
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
+        input[type="text"] { width: calc(100% - 100px); padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 15px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        .progress-bar-container { width: 100%; background-color: #e9ecef; border-radius: 4px; margin-top: 15px; display: none; }
+        .progress-bar { width: 0%; height: 20px; background-color: #28a745; text-align: center; line-height: 20px; color: white; border-radius: 4px; transition: width 0.4s ease; }
+        .progress-text { font-size: 0.9em; text-align: center; margin-top: 5px; color: #495057; }
+        #results, #downloaded-videos { margin-top: 20px; }
+        .clip-card, .video-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
+        .clip-card p, .video-card p { margin: 0 0 10px 0; }
+        .aspect-ratio-selector { margin-top: 10px; margin-bottom: 10px; }
+        .aspect-ratio-selector label { margin-right: 15px; }
+        .video-card { display: flex; align-items: center; gap: 20px; }
+        .video-card img { width: 120px; height: 90px; object-fit: cover; border-radius: 4px; }
+        .video-card .info { flex-grow: 1; }
+        .video-card .actions button { background-color: #dc3545; }
+        .video-card .actions button:hover { background-color: #c82333; }
+        #final-short-container { margin-top: 20px; text-align: center; }
+        #final-short-container video { max-width: 100%; border-radius: 8px; }
+        #final-short-container a { display: inline-block; margin-top: 10px; background-color: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>YouTube Shorts Creator</h1>
+        <h1>YouTube Short Video Generator</h1>
 
-        <form id="videoForm">
-            <label for="video_url">YouTube Video Link:</label>
-            <input type="text" id="video_url" name="video_url" placeholder="Paste YouTube video URL here" required>
-            <button type="submit">Download & Analyze Video</button>
+        <form id="video-form">
+            {% csrf_token %}
+            <input type="text" id="video_url" name="video_url" placeholder="Enter YouTube Video URL" required>
+            <button type="submit" id="process-btn">Process Video</button>
         </form>
 
-        <div id="message" class="message" style="display: none;"></div>
-        <div class="loader" id="loader"></div>
-
-        <div id="videoDetails" class="result-section" style="display: none;">
-            <h2>Video Details & Trim Options</h2>
-            <div class="video-details">
-                <p><strong>Title:</strong> <span id="videoTitle"></span></p>
-                <p><strong>Duration:</strong> <span id="videoDuration"></span> seconds</p>
-            </div>
-
-            <h3>Suggested Clips (Most Viewed - *Dummy for now*)</h3>
-            <div class="trim-options" id="suggestedClipsContainer">
-                </div>
-
-            <div class="manual-trim">
-                <h3>Manual Trim</h3>
-                <div class="input-group">
-                    <label for="start_time">Start Time (MM:SS or HH:MM:SS):</label>
-                    <input type="text" id="start_time" placeholder="e.g., 00:10" value="00:00">
-                </div>
-                <div class="input-group">
-                    <label for="end_time">End Time (MM:SS or HH:MM:SS):</label>
-                    <input type="text" id="end_time" placeholder="e.g., 00:25">
-                </div>
-                <div class="input-group">
-                    <label for="add_thumbnail">Add Thumbnail:</label>
-                    <input type="checkbox" id="add_thumbnail" checked>
-                </div>
-                <div class="input-group">
-                    <label for="tags">Tags (comma-separated):</label>
-                    <input type="text" id="tags" placeholder="e.g., vlogs,travel,fun">
-                </div>
-                <button id="generateShortBtn">Generate Short</button>
-            </div>
+        <div id="progress-container" class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
         </div>
+        <div id="progress-text" class="progress-text"></div>
 
-        <div id="shortOutput" class="result-section" style="display: none;">
-            <h2>Your Generated Short</h2>
-            <video id="generatedVideo" controls style="display: none;"></video>
-            <img id="generatedThumbnail" style="display: none; max-height: 200px; object-fit: contain;">
-            <a id="downloadLink" class="download-button" style="display: none;">Download Short</a>
+        <div id="results"></div>
+        <div id="final-short-container"></div>
+
+        <hr style="margin: 30px 0;">
+
+        <h2>Previously Downloaded Videos</h2>
+        <div id="downloaded-videos">
+            {% if videos %}
+                {% for video in videos %}
+                <div class="video-card" id="video-card-{{ video.video_id }}">
+                    <img src="/{{ video.thumbnail_path }}" alt="Thumbnail for {{ video.title }}">
+                    <div class="info">
+                        <strong>{{ video.title }}</strong>
+                        <p>Duration: {{ video.duration|floatformat:"0" }}s</p>
+                    </div>
+                    <div class="actions">
+                        <button class="delete-btn" data-video-id="{{ video.video_id }}">Delete</button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No videos have been downloaded yet.</p>
+            {% endif %}
         </div>
     </div>
 
-    <script>
-        const videoForm = document.getElementById('videoForm');
-        const messageDiv = document.getElementById('message');
-        const loader = document.getElementById('loader');
-        const videoDetailsDiv = document.getElementById('videoDetails');
-        const videoTitleSpan = document.getElementById('videoTitle');
-        const videoDurationSpan = document.getElementById('videoDuration');
-        const suggestedClipsContainer = document.getElementById('suggestedClipsContainer');
-        const generateShortBtn = document.getElementById('generateShortBtn');
-        const start_time_input = document.getElementById('start_time');
-        const end_time_input = document.getElementById('end_time');
-        const add_thumbnail_checkbox = document.getElementById('add_thumbnail');
-        const tags_input = document.getElementById('tags');
-        const shortOutputDiv = document.getElementById('shortOutput');
-        const generatedVideo = document.getElementById('generatedVideo');
-        const generatedThumbnail = document.getElementById('generatedThumbnail');
-        const downloadLink = document.getElementById('downloadLink');
+<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const form = document.getElementById('video-form');
+    const processBtn = document.getElementById('process-btn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const resultsContainer = document.getElementById('results');
+    const finalShortContainer = document.getElementById('final-short-container');
 
-        let currentVideoPath = ''; // To store the path of the downloaded video
+    let progressInterval;
 
-        videoForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const videoUrl = document.getElementById('video_url').value;
+    async function checkProgress(taskId) {
+        try {
+            const response = await fetch(`/check_progress/${taskId}/`);
+            const data = await response.json();
 
-            showMessage('Downloading and analyzing video...', 'info');
-            showLoader();
-            videoDetailsDiv.style.display = 'none';
-            shortOutputDiv.style.display = 'none';
+            progressBar.style.width = `${data.progress || 0}%`;
+            progressBar.textContent = `${Math.round(data.progress) || 0}%`;
+            progressText.textContent = data.message;
 
-            try {
-                const response = await fetch('/process_video/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': getCookie('csrftoken') // Django CSRF token
-                    },
-                    body: `video_url=${encodeURIComponent(videoUrl)}`
-                });
-                const data = await response.json();
-
-                hideLoader();
-                if (data.status === 'success') {
-                    showMessage(data.message, 'success');
-                    videoDetailsDiv.style.display = 'block';
-                    videoTitleSpan.textContent = data.video_title;
-                    videoDurationSpan.textContent = data.video_duration;
-                    currentVideoPath = data.video_path; // Store the video path
-
-                    // Populate suggested clips
-                    suggestedClipsContainer.innerHTML = '';
-                    data.suggested_clips.forEach(clip => {
-                        const clipBox = document.createElement('div');
-                        clipBox.classList.add('trim-option-box');
-                        clipBox.innerHTML = `
-                            <p>${clip.description}</p>
-                            <small>(${clip.start} - ${clip.end})</small>
-                        `;
-                        clipBox.addEventListener('click', () => {
-                            start_time_input.value = clip.start;
-                            end_time_input.value = clip.end;
-                        });
-                        suggestedClipsContainer.appendChild(clipBox);
-                    });
-
-                    // Set default end time to video duration
-                    const totalMinutes = Math.floor(data.video_duration / 60);
-                    const totalSeconds = data.video_duration % 60;
-                    end_time_input.value = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
-
-
-                } else {
-                    showMessage(data.message, 'error');
+            if (data.status === 'complete' || data.status === 'error') {
+                clearInterval(progressInterval);
+                if (data.status === 'error') {
+                     progressContainer.style.display = 'none';
+                     alert(`Error: ${data.message}`);
                 }
-            } catch (error) {
-                hideLoader();
-                showMessage('An error occurred. Please try again.', 'error');
-                console.error('Fetch error:', error);
             }
+        } catch (error) {
+            console.error('Progress check failed:', error);
+            clearInterval(progressInterval);
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        processBtn.disabled = true;
+        resultsContainer.innerHTML = '';
+        finalShortContainer.innerHTML = '';
+        progressContainer.style.display = 'block';
+        progressText.textContent = 'Initializing...';
+        progressBar.style.width = '0%';
+
+        const formData = new FormData(form);
+        const response = await fetch("{% url 'shorts_app:process_video' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': csrfToken},
         });
 
-        generateShortBtn.addEventListener('click', async () => {
-            if (!currentVideoPath) {
-                showMessage('Please download a video first.', 'error');
-                return;
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            const taskId = data.task_id;
+            progressInterval = setInterval(() => checkProgress(taskId), 1000);
+            displayClips(data);
+        } else {
+            alert(`Error: ${data.message}`);
+            progressContainer.style.display = 'none';
+        }
+        processBtn.disabled = false;
+    });
+
+    function displayClips(data) {
+        let html = `<h2>${data.video_title}</h2><p>Select a clip and format to generate a short.</p>`;
+
+        if (data.suggested_clips && data.suggested_clips.length > 0) {
+            data.suggested_clips.forEach((clip, index) => {
+                html += `
+                    <div class="clip-card" id="clip-${index}">
+                        <p><strong>Suggestion ${index + 1}: ${clip.start} - ${clip.end}</strong></p>
+                        <p><em>${clip.description}</em></p>
+                        <div class="aspect-ratio-selector">
+                            <strong>Aspect Ratio:</strong>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked> 📱 Vertical (9:16)</label>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="16:9"> 💻 Horizontal (16:9)</label>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="original"> 🖼️ Original</label>
+                        </div>
+                        <button class="generate-btn" data-start="${clip.start}" data-end="${clip.end}" data-path="${data.video_path}" data-index="${index}">
+                            Create Short
+                        </button>
+                    </div>
+                `;
+            });
+        } else {
+            html += "<p>No AI clip suggestions could be generated.</p>";
+        }
+        resultsContainer.innerHTML = html;
+    }
+
+    resultsContainer.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('generate-btn')) {
+            const button = e.target;
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            finalShortContainer.innerHTML = ''; // Clear previous short
+
+            const clipIndex = button.dataset.index;
+            const selectedAspectRatio = document.querySelector(`input[name="aspect_ratio_${clipIndex}"]:checked`).value;
+
+            progressContainer.style.display = 'block';
+            progressText.textContent = `Generating short with ${selectedAspectRatio} aspect ratio...`;
+            progressBar.style.width = '0%';
+            let fakeProgress = 0;
+            const creationInterval = setInterval(() => {
+                fakeProgress = Math.min(99, fakeProgress + 5);
+                progressBar.style.width = `${fakeProgress}%`;
+                progressBar.textContent = `${fakeProgress}%`;
+            }, 500);
+
+            const payload = {
+                video_path: button.dataset.path,
+                start_time: button.dataset.start,
+                end_time: button.dataset.end,
+                aspect_ratio: selectedAspectRatio
+            };
+
+            const response = await fetch("{% url 'shorts_app:generate_short' %}", {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            });
+
+            clearInterval(creationInterval);
+            const resultData = await response.json();
+
+            if (resultData.status === 'success') {
+                progressText.textContent = "Short created successfully!";
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+
+                finalShortContainer.innerHTML = `
+                    <h3>Your Short is Ready!</h3>
+                    <video controls src="${resultData.short_url}"></video>
+                    <br>
+                    <a href="/download_short/${resultData.short_url.split('/').pop()}" download>Download Short</a>
+                `;
+            } else {
+                alert(`Error creating short: ${resultData.message}`);
+                progressContainer.style.display = 'none';
             }
+            button.disabled = false;
+            button.textContent = 'Create Short';
+        }
+    });
 
-            const start_time = start_time_input.value;
-            const end_time = end_time_input.value;
-            const add_thumbnail = add_thumbnail_checkbox.checked;
-            const tags = tags_input.value;
-
-            showMessage('Generating short...', 'info');
-            showLoader();
-            shortOutputDiv.style.display = 'none';
-            generatedVideo.style.display = 'none';
-            generatedThumbnail.style.display = 'none';
-            downloadLink.style.display = 'none';
-
-
-            try {
-                const response = await fetch('/generate_short/', {
+    // Handle Delete Button
+    document.getElementById('downloaded-videos').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const button = e.target;
+            const videoId = button.dataset.videoId;
+            if (confirm('Are you sure you want to delete this video and its files? This action cannot be undone.')) {
+                const response = await fetch(`/delete_video/${videoId}/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        video_path: currentVideoPath,
-                        start_time: start_time,
-                        end_time: end_time,
-                        add_thumbnail: add_thumbnail,
-                        tags: tags
-                    })
+                    headers: {'X-CSRFToken': csrfToken}
                 });
                 const data = await response.json();
-
-                hideLoader();
                 if (data.status === 'success') {
-                    showMessage(data.message, 'success');
-                    shortOutputDiv.style.display = 'block';
-                    generatedVideo.src = data.short_url;
-                    generatedVideo.style.display = 'block';
-                    downloadLink.href = data.short_url; // Direct download link
-                    downloadLink.style.display = 'block';
-                    if (data.thumbnail_url) {
-                        generatedThumbnail.src = data.thumbnail_url;
-                        generatedThumbnail.style.display = 'block';
-                    } else {
-                        generatedThumbnail.style.display = 'none';
-                    }
-
+                    document.getElementById(`video-card-${videoId}`).remove();
                 } else {
-                    showMessage(data.message, 'error');
-                }
-            } catch (error) {
-                hideLoader();
-                showMessage('An error occurred during short generation. Please try again.', 'error');
-                console.error('Generate short error:', error);
-            }
-        });
-
-        function showMessage(msg, type) {
-            messageDiv.textContent = msg;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
-
-        function showLoader() {
-            loader.style.display = 'block';
-        }
-
-        function hideLoader() {
-            loader.style.display = 'none';
-        }
-
-        // Function to get CSRF token (required for POST requests in Django)
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+                    alert(`Error: ${data.message}`);
                 }
             }
-            return cookieValue;
         }
-    </script>
+    });
+
+</script>
+
 </body>
 </html>
