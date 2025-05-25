@@ -1,6 +1,8 @@
-torch
-streamlit
-diffusers
+Django
+yt-dlp
 moviepy
-transformers
-toml
+google-generativeai
+webvtt-py
+google-api-python-client
+google-auth-oauthlib
+gunicorn

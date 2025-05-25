@@ -28,7 +28,6 @@
 
 # shorts_app/models.py
 
-from django.db import models
 # shorts_app/models.py
 
 from django.db import models
@@ -40,6 +39,7 @@ class DownloadedVideo(models.Model):
     file_path = models.CharField(max_length=255)
     thumbnail_path = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    suggestions = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.title

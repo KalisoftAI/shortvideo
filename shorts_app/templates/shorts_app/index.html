@@ -3,241 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Short Video Generator</title>
+    <title>AI Short Video Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1, h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
-        input[type="text"] { width: calc(100% - 100px); padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 10px 15px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
-        .progress-bar-container { width: 100%; background-color: #e9ecef; border-radius: 4px; margin-top: 15px; display: none; }
-        .progress-bar { width: 0%; height: 20px; background-color: #28a745; text-align: center; line-height: 20px; color: white; border-radius: 4px; transition: width 0.4s ease; }
-        .progress-text { font-size: 0.9em; text-align: center; margin-top: 5px; color: #495057; }
-        #results, #downloaded-videos { margin-top: 20px; }
-        .clip-card, .video-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 15px; }
-        .clip-card p, .video-card p { margin: 0 0 10px 0; }
-        .aspect-ratio-selector { margin-top: 10px; margin-bottom: 10px; }
-        .aspect-ratio-selector label { margin-right: 15px; }
-        .video-card { display: flex; align-items: center; gap: 20px; }
-        .video-card img { width: 120px; height: 90px; object-fit: cover; border-radius: 4px; }
-        .video-card .info { flex-grow: 1; }
-        .video-card .actions button { background-color: #dc3545; }
-        .video-card .actions button:hover { background-color: #c82333; }
-        #final-short-container { margin-top: 20px; text-align: center; }
-        #final-short-container video { max-width: 100%; border-radius: 8px; }
-        #final-short-container a { display: inline-block; margin-top: 10px; background-color: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; }
+        :root {
+            --primary-color: #007bff; --primary-hover: #0056b3;
+            --secondary-color: #6c757d; --secondary-hover: #5a6268;
+            --success-color: #28a745; --danger-color: #dc3545; --danger-hover: #c82333;
+            --light-gray: #f8f9fa; --medium-gray: #e9ecef; --dark-gray: #6c757d;
+            --text-color: #212529; --border-radius: 8px; --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: var(--text-color); margin: 0; padding: 2rem; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; }
+        h1, h2, h3 { color: var(--text-color); padding-bottom: 10px; font-weight: 700; margin-top: 0; }
+        h2 { border-bottom: 1px solid var(--medium-gray); }
+        .card { background: #fff; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 2rem; }
+
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+        .logo svg { width: 32px; height: 32px; fill: var(--primary-color);}
+
+        form { display: flex; gap: 1rem; }
+        input[type="text"], input[type="password"], textarea {
+            flex-grow: 1; padding: 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem;
+            width: 100%; box-sizing: border-box;
+        }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+
+        button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 12px 20px;
+            border: none; background-color: var(--primary-color); color: white; font-size: 1rem; font-weight: 600;
+            border-radius: var(--border-radius); cursor: pointer; transition: background-color 0.2s, opacity 0.2s;
+        }
+        button:hover:not(:disabled) { background-color: var(--primary-hover); }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
+        .btn-secondary { background-color: var(--secondary-color); }
+        .btn-secondary:hover:not(:disabled) { background-color: var(--secondary-hover); }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover:not(:disabled) { background-color: var(--danger-hover); }
+
+        .progress-bar-container { width: 100%; background-color: var(--medium-gray); border-radius: var(--border-radius); margin-top: 15px; display: none; overflow: hidden; }
+        .progress-bar { width: 0%; height: 24px; background-color: var(--success-color); text-align: center; line-height: 24px; color: white; font-weight: 600; transition: width 0.4s ease; }
+        .progress-text { font-size: 0.9em; text-align: center; margin-top: 5px; color: var(--dark-gray); font-weight: 500; }
+
+        #downloaded-videos-list { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .video-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; background-color: var(--light-gray); border-radius: var(--border-radius); margin-bottom: 1rem; }
+        .video-card img { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+        .video-card .info { flex-grow: 1; min-width: 0; }
+        .video-card .info strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+        .video-card .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; flex-shrink: 0; }
+
+        #results-container h2 .video-title { color: var(--primary-color); font-style: italic; }
+        .clip-card { border: 1px solid var(--medium-gray); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1rem; }
+        .clip-card.disabled { background-color: #f8f9fa; }
+        .clip-card .description { font-style: italic; color: var(--dark-gray); margin: 0.5rem 0 1rem 0; }
+        .clip-card .aspect-ratio-selector { margin: 1rem 0; }
+        .error-message { color: var(--danger-color); font-size: 0.9rem; margin-top: 10px; min-height: 1rem; font-weight: 500;}
+
+        #final-short-container video { max-width: 270px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin: 1rem auto;}
+        #final-short-container a { display: inline-block; margin-top: 1rem; background-color: var(--success-color); color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; }
+
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        button.loading .spinner { display: block; }
+        button.loading .btn-text { display: none; }
+        button .spinner { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>YouTube Short Video Generator</h1>
+        <header class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 15.06L13.09 12.94L10 10.81V15.06M21.78 12.19L18.73 14.15L15.68 12.19L18.73 10.23L21.78 12.19M15.42 16.36L12.37 18.32L9.32 16.36L12.37 14.4L15.42 16.36M9.06 15.06L5.97 12.94L9.06 10.81V15.06M12.11 3.23L3.5 8.47V17.5L12.11 22.77L20.72 17.5V8.47L12.11 3.23Z"></path></svg>
+                <span>AI Video Clipper</span>
+            </div>
+        </header>
 
-        <form id="video-form">
-            {% csrf_token %}
-            <input type="text" id="video_url" name="video_url" placeholder="Enter YouTube Video URL" required>
-            <button type="submit" id="process-btn">Process Video</button>
-        </form>
-
-        <div id="progress-container" class="progress-bar-container">
-            <div id="progress-bar" class="progress-bar"></div>
+        <div class="card">
+            <h2>1. Process a Video</h2>
+            <form id="video-form">
+                {% csrf_token %}
+                <input type="text" id="video_url" name="video_url" placeholder="Enter New YouTube Video URL">
+                <button type="submit" id="process-btn">
+                    <span class="btn-text">Process</span><div class="spinner"></div>
+                </button>
+            </form>
+            <div id="progress-container" class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="progress-text" class="progress-text"></div>
         </div>
-        <div id="progress-text" class="progress-text"></div>
 
-        <div id="results"></div>
+        <div id="results-container"></div>
+
+        <div class="card" id="manual-card" style="display: none;">
+            <h2>Create with Manual Timings</h2>
+            <p>Enter start and end times in MM:SS format.</p>
+            <div class="manual-inputs" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <input type="text" id="manual-start-time" placeholder="e.g., 01:23" style="width: 120px;">
+                <span>to</span>
+                <input type="text" id="manual-end-time" placeholder="e.g., 01:55" style="width: 120px;">
+            </div>
+            <div class="aspect-ratio-selector">
+                <strong>Aspect Ratio:</strong>
+                <label><input type="radio" name="manual_aspect_ratio" value="9:16" checked> 📱 Vertical</label>
+                <label><input type="radio" name="manual_aspect_ratio" value="16:9"> 💻 Horizontal</label>
+                <label><input type="radio" name="manual_aspect_ratio" value="original"> 🖼️ Original</label>
+            </div>
+            <button id="manual-generate-btn">
+                <span class="btn-text">Create Manual Short</span><div class="spinner"></div>
+            </button>
+            <div class="error-message" id="error-manual"></div>
+        </div>
+
         <div id="final-short-container"></div>
 
-        <hr style="margin: 30px 0;">
-
-        <h2>Previously Downloaded Videos</h2>
-        <div id="downloaded-videos">
-            {% if videos %}
-                {% for video in videos %}
-                <div class="video-card" id="video-card-{{ video.video_id }}">
-                    <img src="/{{ video.thumbnail_path }}" alt="Thumbnail for {{ video.title }}">
-                    <div class="info">
-                        <strong>{{ video.title }}</strong>
-                        <p>Duration: {{ video.duration|floatformat:"0" }}s</p>
-                    </div>
-                    <div class="actions">
-                        <button class="delete-btn" data-video-id="{{ video.video_id }}">Delete</button>
-                    </div>
+        <div class="card" id="youtube-upload-card" style="display: none;">
+            <h3>4. Upload to YouTube</h3>
+            <form id="youtube-upload-form">
+                <input type="hidden" id="upload-short-path">
+                <div class="form-group">
+                    <label for="upload-title">Title</label>
+                    <input type="text" id="upload-title" required>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p>No videos have been downloaded yet.</p>
-            {% endif %}
+                <div class="form-group">
+                    <label for="upload-description">Description</label>
+                    <textarea id="upload-description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="upload-tags">Tags (comma-separated)</label>
+                    <input type="text" id="upload-tags">
+                </div>
+                <button type="submit" id="youtube-upload-btn">
+                    <span class="btn-text">Upload to YouTube</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
+            <div class="error-message" id="error-youtube-upload" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card">
+            <h2>Previously Processed Videos</h2>
+            <div id="downloaded-videos-list">
+                {% if videos %}
+                    {% for video in videos %}
+                    <div class="video-card" id="video-card-{{ video.video_id }}">
+                        <img src="{{ video.thumbnail_path }}" alt="Thumbnail">
+                        <div class="info">
+                            <strong>{{ video.title }}</strong>
+                            <p>Duration: {{ video.duration|floatformat:"0" }}s</p>
+                        </div>
+                        <div class="actions">
+                            <button class="view-btn btn-secondary" data-video-path="{{ video.file_path }}">View</button>
+                            <button class="use-btn" data-video-id="{{ video.video_id }}">
+                                <span class="btn-text">Use</span><div class="spinner"></div>
+                            </button>
+                            <button class="delete-btn btn-danger" data-video-id="{{ video.video_id }}">Delete</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No videos have been processed yet.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 
 <script>
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const form = document.getElementById('video-form');
-    const processBtn = document.getElementById('process-btn');
+    const resultsContainer = document.getElementById('results-container');
+    const finalShortContainer = document.getElementById('final-short-container');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
-    const resultsContainer = document.getElementById('results');
-    const finalShortContainer = document.getElementById('final-short-container');
+    const videoForm = document.getElementById('video-form');
+    const downloadedVideosList = document.getElementById('downloaded-videos-list');
 
     let progressInterval;
 
-    async function checkProgress(taskId) {
-        try {
-            const response = await fetch(`/check_progress/${taskId}/`);
-            const data = await response.json();
-
-            progressBar.style.width = `${data.progress || 0}%`;
-            progressBar.textContent = `${Math.round(data.progress) || 0}%`;
-            progressText.textContent = data.message;
-
-            if (data.status === 'complete' || data.status === 'error') {
-                clearInterval(progressInterval);
-                if (data.status === 'error') {
-                     progressContainer.style.display = 'none';
-                     alert(`Error: ${data.message}`);
-                }
-            }
-        } catch (error) {
-            console.error('Progress check failed:', error);
-            clearInterval(progressInterval);
-        }
+    function toggleButtonLoading(button, isLoading) {
+        if (!button) return;
+        button.disabled = isLoading;
+        button.classList.toggle('loading', isLoading);
     }
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        processBtn.disabled = true;
+    function timeToSeconds(timeStr) {
+        if (!timeStr) return 0;
+        const parts = timeStr.split(':').map(p => parseInt(p, 10));
+        if (parts.length === 2) return parts[0] * 60 + parts[1];
+        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+        return 0;
+    }
+
+    async function startProcessing(formData, buttonToLoad) {
+        toggleButtonLoading(buttonToLoad, true);
         resultsContainer.innerHTML = '';
         finalShortContainer.innerHTML = '';
+        document.getElementById('manual-card').style.display = 'none';
+        document.getElementById('youtube-upload-card').style.display = 'none';
         progressContainer.style.display = 'block';
-        progressText.textContent = 'Initializing...';
+        progressBar.style.backgroundColor = 'var(--success-color)';
+        progressText.textContent = 'Initializing task...';
         progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
 
-        const formData = new FormData(form);
-        const response = await fetch("{% url 'shorts_app:process_video' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {'X-CSRFToken': csrfToken},
-        });
+        try {
+            const response = await fetch("{% url 'shorts_app:process_video' %}", {
+                method: 'POST', body: formData, headers: {'X-CSRFToken': csrfToken},
+            });
+            const data = await response.json();
 
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            const taskId = data.task_id;
-            progressInterval = setInterval(() => checkProgress(taskId), 1000);
-            displayClips(data);
-        } else {
-            alert(`Error: ${data.message}`);
+            if (data.status === 'processing') {
+                progressInterval = setInterval(() => checkProgress(data.task_id, buttonToLoad), 1000);
+            } else {
+                alert(`Error starting task: ${data.message}`);
+                toggleButtonLoading(buttonToLoad, false);
+                progressContainer.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Processing failed:', error);
+            alert('An unexpected error occurred.');
+            toggleButtonLoading(buttonToLoad, false);
             progressContainer.style.display = 'none';
         }
-        processBtn.disabled = false;
-    });
-
-    function displayClips(data) {
-        let html = `<h2>${data.video_title}</h2><p>Select a clip and format to generate a short.</p>`;
-
-        if (data.suggested_clips && data.suggested_clips.length > 0) {
-            data.suggested_clips.forEach((clip, index) => {
-                html += `
-                    <div class="clip-card" id="clip-${index}">
-                        <p><strong>Suggestion ${index + 1}: ${clip.start} - ${clip.end}</strong></p>
-                        <p><em>${clip.description}</em></p>
-                        <div class="aspect-ratio-selector">
-                            <strong>Aspect Ratio:</strong>
-                            <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked> 📱 Vertical (9:16)</label>
-                            <label><input type="radio" name="aspect_ratio_${index}" value="16:9"> 💻 Horizontal (16:9)</label>
-                            <label><input type="radio" name="aspect_ratio_${index}" value="original"> 🖼️ Original</label>
-                        </div>
-                        <button class="generate-btn" data-start="${clip.start}" data-end="${clip.end}" data-path="${data.video_path}" data-index="${index}">
-                            Create Short
-                        </button>
-                    </div>
-                `;
-            });
-        } else {
-            html += "<p>No AI clip suggestions could be generated.</p>";
-        }
-        resultsContainer.innerHTML = html;
     }
 
-    resultsContainer.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('generate-btn')) {
-            const button = e.target;
-            button.disabled = true;
-            button.textContent = 'Creating...';
-            finalShortContainer.innerHTML = ''; // Clear previous short
+    videoForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        startProcessing(new FormData(videoForm), document.getElementById('process-btn'));
+    });
 
-            const clipIndex = button.dataset.index;
-            const selectedAspectRatio = document.querySelector(`input[name="aspect_ratio_${clipIndex}"]:checked`).value;
+    downloadedVideosList.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
 
-            progressContainer.style.display = 'block';
-            progressText.textContent = `Generating short with ${selectedAspectRatio} aspect ratio...`;
-            progressBar.style.width = '0%';
-            let fakeProgress = 0;
-            const creationInterval = setInterval(() => {
-                fakeProgress = Math.min(99, fakeProgress + 5);
-                progressBar.style.width = `${fakeProgress}%`;
-                progressBar.textContent = `${fakeProgress}%`;
-            }, 500);
+        const videoId = button.dataset.videoId;
+        if (button.classList.contains('use-btn')) {
+            const formData = new FormData();
+            formData.append('video_id', videoId);
+            startProcessing(formData, button);
+        } else if (button.classList.contains('view-btn')) {
+            window.open(button.dataset.videoPath, '_blank');
+        } else if (button.classList.contains('delete-btn')) {
+            deleteVideo(videoId, button);
+        }
+    });
 
-            const payload = {
-                video_path: button.dataset.path,
-                start_time: button.dataset.start,
-                end_time: button.dataset.end,
-                aspect_ratio: selectedAspectRatio
-            };
+    function checkProgress(taskId, buttonToLoad) {
+        fetch(`/check_progress/${taskId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) return;
+                progressBar.style.width = `${data.progress || 0}%`;
+                progressBar.textContent = `${Math.round(data.progress) || 0}%`;
+                progressText.textContent = data.message;
 
+                if (data.status === 'complete') {
+                    clearInterval(progressInterval);
+                    toggleButtonLoading(buttonToLoad, false);
+                    progressText.textContent = 'Done!';
+                    setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
+                    displayClips(data.result);
+                    document.getElementById('video_url').value = '';
+                } else if (data.status === 'error') {
+                    clearInterval(progressInterval);
+                    toggleButtonLoading(buttonToLoad, false);
+                    progressText.textContent = `Error: ${data.message}`;
+                    progressBar.style.backgroundColor = 'var(--danger-color)';
+                }
+            }).catch(() => {
+                clearInterval(progressInterval);
+                toggleButtonLoading(buttonToLoad, false);
+            });
+    }
+
+    function displayClips(data) {
+        let clipsHtml = '';
+        if (data.suggested_clips && data.suggested_clips.length > 0) {
+            data.suggested_clips.forEach((clip, index) => {
+                const isInvalid = !clip.start_time || !clip.end_time || (timeToSeconds(clip.start_time) >= data.video_duration);
+                clipsHtml += `
+                    <div class="clip-card ${isInvalid ? 'disabled' : ''}">
+                        <p><strong>Suggestion: ${clip.start_time || 'N/A'} - ${clip.end_time || 'N/A'}</strong></p>
+                        <p class="description">${clip.description || 'No description provided.'}</p>
+                        <div class="aspect-ratio-selector">
+                           <strong>Aspect Ratio:</strong>
+                           <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked> 📱 Vertical</label>
+                           <label><input type="radio" name="aspect_ratio_${index}" value="16:9"> 💻 Horizontal</label>
+                           <label><input type="radio" name="aspect_ratio_${index}" value="original"> 🖼️ Original</label>
+                        </div>
+                        <button class="generate-btn" data-start="${clip.start_time}" data-end="${clip.end_time}" data-path="${data.video_path}" data-index="${index}" ${isInvalid ? 'disabled' : ''}>
+                            <span class="btn-text">Create From Suggestion</span><div class="spinner"></div>
+                        </button>
+                        <div class="error-message" id="error-clip-${index}">${isInvalid ? 'Warning: Suggested time is invalid or missing.' : ''}</div>
+                    </div>`;
+            });
+        } else {
+            clipsHtml = "<p>No AI clip suggestions could be generated. You can use the manual tool below.</p>";
+        }
+
+        resultsContainer.innerHTML = `
+            <div class="card">
+                <h2>2. Create a Short for "<span class="video-title">${data.video_title}</span>"</h2>
+                <div class="clips-list-container">${clipsHtml}</div>
+            </div>`;
+
+        const manualCard = document.getElementById('manual-card');
+        manualCard.style.display = 'block';
+        manualCard.dataset.videoPath = data.video_path;
+    }
+
+    async function generateShort(payload, button, errorDiv) {
+        errorDiv.textContent = '';
+        toggleButtonLoading(button, true);
+        finalShortContainer.innerHTML = '';
+        document.getElementById('youtube-upload-card').style.display = 'none';
+
+        try {
             const response = await fetch("{% url 'shorts_app:generate_short' %}", {
                 method: 'POST',
                 body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             });
-
-            clearInterval(creationInterval);
             const resultData = await response.json();
 
             if (resultData.status === 'success') {
-                progressText.textContent = "Short created successfully!";
-                progressBar.style.width = '100%';
-                progressBar.textContent = '100%';
-
                 finalShortContainer.innerHTML = `
-                    <h3>Your Short is Ready!</h3>
-                    <video controls src="${resultData.short_url}"></video>
-                    <br>
-                    <a href="/download_short/${resultData.short_url.split('/').pop()}" download>Download Short</a>
-                `;
+                    <div class="card" style="text-align:center;">
+                        <h3>3. Your Short is Ready!</h3>
+                        <video controls src="${resultData.short_url}"></video><br>
+                        <a href="/download_short/${resultData.short_url.split('/').pop()}" download>Download Short</a>
+                    </div>`;
+
+                const uploadCard = document.getElementById('youtube-upload-card');
+                uploadCard.style.display = 'block';
+                document.getElementById('upload-short-path').value = resultData.short_url;
+                const videoTitleSpan = document.querySelector('.video-title');
+                const videoTitle = videoTitleSpan ? videoTitleSpan.textContent : "My Video";
+                document.getElementById('upload-title').value = `Clip from: ${videoTitle}`;
+                document.getElementById('upload-description').value = `A short clip from the video "${videoTitle}".\n\nGenerated by AI Video Clipper.`;
+                window.scrollTo({ top: finalShortContainer.offsetTop, behavior: 'smooth' });
             } else {
-                alert(`Error creating short: ${resultData.message}`);
-                progressContainer.style.display = 'none';
+                errorDiv.textContent = `Error: ${resultData.message}`;
             }
-            button.disabled = false;
-            button.textContent = 'Create Short';
+        } catch (error) {
+            errorDiv.textContent = 'An unexpected error occurred.';
+        } finally {
+            toggleButtonLoading(button, false);
+        }
+    }
+
+    resultsContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('button.generate-btn');
+        if (!button) return;
+        const clipIndex = button.dataset.index;
+        const payload = {
+            video_path: button.dataset.path,
+            start_time: button.dataset.start,
+            end_time: button.dataset.end,
+            aspect_ratio: document.querySelector(`input[name="aspect_ratio_${clipIndex}"]:checked`).value
+        };
+        // Client-side check to prevent sending "undefined"
+        if (payload.start_time === "undefined" || payload.end_time === "undefined" || !payload.start_time || !payload.end_time) {
+            document.getElementById(`error-clip-${clipIndex}`).textContent = 'Error: Invalid clip times. Suggestion may be malformed.';
+            return;
+        }
+        generateShort(payload, button, document.getElementById(`error-clip-${clipIndex}`));
+    });
+
+    document.getElementById('manual-generate-btn').addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        const errorDiv = document.getElementById('error-manual');
+        const videoPath = document.getElementById('manual-card').dataset.videoPath;
+        const startTime = document.getElementById('manual-start-time').value.trim();
+        const endTime = document.getElementById('manual-end-time').value.trim();
+
+        // Updated regex to support longer minutes/hours if needed, but primarily for MM:SS
+        if (!startTime || !endTime || !/^\d{1,4}:\d{2}$/.test(startTime) || !/^\d{1,4}:\d{2}$/.test(endTime)) {
+            errorDiv.textContent = 'Please enter start and end times in MM:SS format (e.g., 01:23 or 120:45).';
+            return;
+        }
+
+        const payload = {
+            video_path: videoPath,
+            start_time: startTime,
+            end_time: endTime,
+            aspect_ratio: document.querySelector('input[name="manual_aspect_ratio"]:checked').value
+        };
+        generateShort(payload, button, errorDiv);
+    });
+
+    document.getElementById('youtube-upload-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const button = document.getElementById('youtube-upload-btn');
+        const errorDiv = document.getElementById('error-youtube-upload');
+        errorDiv.textContent = '';
+        toggleButtonLoading(button, true);
+
+        const payload = {
+            short_path: document.getElementById('upload-short-path').value,
+            title: document.getElementById('upload-title').value,
+            description: document.getElementById('upload-description').value,
+            tags: document.getElementById('upload-tags').value
+        };
+
+        try {
+            const response = await fetch("{% url 'shorts_app:upload_youtube' %}", {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            });
+            const resultData = await response.json();
+            if (resultData.status === 'success') {
+                errorDiv.style.color = 'var(--success-color)';
+                errorDiv.textContent = `Successfully uploaded! Video ID: ${resultData.video_id}. It will be available on YouTube shortly.`;
+            } else {
+                errorDiv.style.color = 'var(--danger-color)';
+                errorDiv.textContent = `Upload failed: ${resultData.message}`;
+            }
+        } catch (error) {
+            errorDiv.textContent = 'An unexpected error occurred during upload.';
+        } finally {
+            toggleButtonLoading(button, false);
         }
     });
 
-    // Handle Delete Button
-    document.getElementById('downloaded-videos').addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            const button = e.target;
-            const videoId = button.dataset.videoId;
-            if (confirm('Are you sure you want to delete this video and its files? This action cannot be undone.')) {
-                const response = await fetch(`/delete_video/${videoId}/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': csrfToken}
-                });
-                const data = await response.json();
-                if (data.status === 'success') {
-                    document.getElementById(`video-card-${videoId}`).remove();
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
+    async function deleteVideo(videoId, button) {
+        if (confirm('Are you sure you want to delete this video and its files?')) {
+            toggleButtonLoading(button, true); // Disable delete button during operation
+            const response = await fetch(`/delete_video/${videoId}/`, {
+                method: 'POST', headers: {'X-CSRFToken': csrfToken}
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                button.closest('.video-card').remove();
+            } else {
+                alert(`Error: ${data.message}`);
+                toggleButtonLoading(button, false); // Re-enable if error
             }
         }
-    });
-
+    }
 </script>
-
 </body>
 </html>
