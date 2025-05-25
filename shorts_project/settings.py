@@ -164,3 +164,4 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # API Key for Google Gemini
 GEMINI_API_KEY = "AIzaSyCok9ZDKb3uNRcz2nIQBCvzrWPlAhT2WTI"
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
