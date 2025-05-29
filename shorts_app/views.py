@@ -11,7 +11,6 @@ from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.http import JsonResponse, FileResponse, Http404
 from django.core.cache import cache
-from django.urls import reverse
 from yt_dlp import YoutubeDL
 from moviepy.editor import VideoFileClip, CompositeVideoClip, ColorClip
 from moviepy.video.fx.all import crop, resize
@@ -65,10 +64,10 @@ def get_youtube_id(url):
     # This function remains unchanged
     if not url: return None
     query = urlparse(url)
-    if query.hostname == 'youtu.be': return query.path[1:]
     if query.hostname in ('www.youtube.com', 'youtube.com'):
         if query.path == '/watch': return parse_qs(query.query).get('v', [None])[0]
         if query.path.startswith(('/embed/', '/v/')): return query.path.split('/')[2]
+    if query.hostname == 'youtu.be': return query.path[1:]
     return None
 
 
@@ -78,26 +77,12 @@ def index(request):
     return render(request, 'shorts_app/index.html', {'videos': processed_videos, 'shorts': generated_shorts})
 
 
-def pricing(request):
-    return render(request, 'shorts_app/pricing.html')
-
-
 def check_progress(request, task_id):
     return JsonResponse(cache.get(task_id, {"status": "PENDING", "progress": 0, "message": "Initializing..."}))
 
 
 def process_video(request):
     if request.method != 'POST': return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
-
-    # --- USAGE LIMIT ---
-    # For demonstration, we'll limit the total number of processed videos to 2.
-    # In a real application, you would tie this to a user account.
-    if DownloadedVideo.objects.count() >= 2:
-        return JsonResponse({
-            'status': 'limit_exceeded',
-            'message': 'You have reached the free limit of 2 processed videos.',
-            'redirect_url': reverse('shorts_app:pricing')
-        })
 
     video_url = request.POST.get('video_url')
     video_id = request.POST.get('video_id') or get_youtube_id(video_url)

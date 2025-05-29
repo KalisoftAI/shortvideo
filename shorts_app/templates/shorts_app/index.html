@@ -39,15 +39,10 @@
         .header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            text-align: center;
             margin-bottom: 2rem;
-            padding: 1rem 0;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            color: inherit;
+            padding: 1.5rem 0;
         }
         .header__logo {
             width: 60px;
@@ -66,17 +61,6 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-        }
-        .nav-link {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            text-decoration: none;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-            transition: color var(--transition-speed);
-        }
-        .nav-link:hover {
-            color: var(--primary-hover);
         }
         h2 {
             font-family: 'Poppins', sans-serif;
@@ -188,19 +172,16 @@
 
     <div class="container">
         <header class="header">
-            <a href="{% url 'shorts_app:index' %}" class="header-left">
-                <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color: #6a11cb;"/>
-                            <stop offset="100%" style="stop-color: #2575fc;"/>
-                        </linearGradient>
-                    </defs>
-                    <path fill="url(#logoGradient)" d="M85.3,17.6c-4.6-4.6-10.8-7.1-17.3-7.1H32c-6.5,0-12.7,2.5-17.3,7.1C10.1,22.2,7.6,28.4,7.6,35v30 c0,6.5,2.5,12.7,7.1,17.3s10.8,7.1,17.3,7.1h36c6.5,0,12.7-2.5,17.3-7.1s7.1-10.8,7.1-17.3V35C92.4,28.4,89.9,22.2,85.3,17.6z M65,52.5l-20,12.5c-1.7,1.1-3.9-0.3-3.9-2.5V37.5c0-2.2,2.1-3.6,3.9-2.5l20,12.5C66.7,48.6,66.7,51.4,65,52.5z"/>
-                </svg>
-                <h1 class="header__title"><span>ClipCraft</span> AI</h1>
-            </a>
-            <a href="{% url 'shorts_app:pricing' %}" class="nav-link">Pricing</a>
+            <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: #6a11cb;"/>
+                        <stop offset="100%" style="stop-color: #2575fc;"/>
+                    </linearGradient>
+                </defs>
+                <path fill="url(#logoGradient)" d="M85.3,17.6c-4.6-4.6-10.8-7.1-17.3-7.1H32c-6.5,0-12.7,2.5-17.3,7.1C10.1,22.2,7.6,28.4,7.6,35v30 c0,6.5,2.5,12.7,7.1,17.3s10.8,7.1,17.3,7.1h36c6.5,0,12.7-2.5,17.3-7.1s7.1-10.8,7.1-17.3V35C92.4,28.4,89.9,22.2,85.3,17.6z M65,52.5l-20,12.5c-1.7,1.1-3.9-0.3-3.9-2.5V37.5c0-2.2,2.1-3.6,3.9-2.5l20,12.5C66.7,48.6,66.7,51.4,65,52.5z"/>
+            </svg>
+            <h1 class="header__title"><span>ClipCraft</span> AI</h1>
         </header>
 
         <div class="card">
@@ -306,13 +287,6 @@
             const response = await fetch("{% url 'shorts_app:process_video' %}", { method: 'POST', body: formData, headers: {'X-CSRFToken': csrfToken} });
             if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
             const data = await response.json();
-
-            if (data.status === 'limit_exceeded') {
-                alert(data.message);
-                window.location.href = data.redirect_url;
-                return;
-            }
-
             if (data.task_id) {
                 progressInterval = setInterval(() => checkProgress(data.task_id, button), 2000);
             } else { throw new Error(data.message || 'Failed to start task.'); }
@@ -334,15 +308,14 @@
                 if (data.status === 'complete') {
                     clearInterval(progressInterval);
                     toggleButtonLoading(button, false);
-                    setTimeout(() => {
-                        showProgress('processing', false);
-                        // Reload the page to show the new video in the "Previously Processed" list
-                        window.location.reload();
-                    }, 1000);
+                    setTimeout(() => showProgress('processing', false), 2000);
+                    document.getElementById('video_url').value = '';
+                    displayClips(data.result);
                 } else if (data.status === 'error') {
                     clearInterval(progressInterval);
                     toggleButtonLoading(button, false);
                     document.getElementById('processing-progress-text').textContent = `Error: ${data.message}`;
+                    // Optionally style the progress bar red for error
                     document.getElementById('processing-progress-bar').style.backgroundColor = 'var(--danger-color)';
                 }
             }).catch(error => {
@@ -391,7 +364,7 @@
                 const payload = {
                     video_id: videoId,
                     clip_data: { start_time: startTime, end_time: endTime, title: "Manual Clip", description: `Manual clip: ${startTime}-${endTime}`, tags: ["manual"] },
-                    aspect_ratio: card.querySelector('input[name="manual_aspect_ratio"]:checked`).value
+                    aspect_ratio: card.querySelector('input[name="manual_aspect_ratio"]:checked').value
                 };
                 handleShortGeneration(payload, manualBtn);
             });
@@ -419,6 +392,7 @@
             });
         }
 
+        // Always include the manual creation card
         const manualCardHtml = `
             <div class="manual-card">
                 <h4>Create Manually</h4>
@@ -453,6 +427,7 @@
     }
 
     async function handleShortGeneration(payload, button) {
+        // Disable all generation buttons to prevent multiple clicks
         document.querySelectorAll('.generate-btn, .manual-generate-btn').forEach(b => b.disabled = true);
         toggleButtonLoading(button, true);
         showProgress('generation', true, 'Creating your short... This may take a moment.', -1);
@@ -468,6 +443,7 @@
             } else { throw new Error(result.message); }
         } catch (error) {
             alert(`Error creating short: ${error.message || 'An unexpected error occurred.'}`);
+            // Re-enable buttons on failure
             toggleButtonLoading(button, false);
             document.querySelectorAll('.generate-btn, .manual-generate-btn').forEach(b => b.disabled = false);
             showProgress('generation', false);
@@ -485,6 +461,7 @@
                 if (response.ok) {
                     const cardId = type === 'video' ? `video-card-${id}` : `short-card-${id}`;
                     const cardElement = document.getElementById(cardId);
+                    // Add a fade-out effect before removing
                     cardElement.style.transition = 'opacity 0.5s ease';
                     cardElement.style.opacity = '0';
                     setTimeout(() => cardElement?.remove(), 500);
@@ -500,40 +477,31 @@
         }
     }
 
+    // --- Main Event Listeners for STATIC elements ---
     document.getElementById('video-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const urlInput = document.getElementById('video_url');
         if (urlInput.value.trim() === '') {
-            // Check if there are any previously processed videos to use
-            const useButton = document.querySelector('.use-btn');
-            if (useButton) {
-                startProcessing(new FormData(), useButton);
-                return;
-            }
             alert('Please enter a YouTube URL.');
             return;
         }
         startProcessing(new FormData(e.target), e.target.querySelector('button.btn'));
     });
 
+    // Delegated event listener for multiple sections
     document.body.addEventListener('click', e => {
         const button = e.target.closest('button.btn');
         if(!button) return;
 
+        // "Use" button for previously processed videos
         if (button.classList.contains('use-btn')) {
             e.preventDefault();
-            const videoId = button.dataset.videoId;
-            const videoCard = document.getElementById(`video-card-${videoId}`);
-            const videoTitle = videoCard.querySelector('.video-card__info').textContent;
-            const suggestions = JSON.parse(videoCard.dataset.suggestions || '[]');
-
-            const data = {
-                video_id: videoId,
-                video_title: videoTitle,
-                suggested_clips: suggestions
-            };
-            displayClips(data);
+            const formData = new FormData();
+            formData.append('video_id', button.dataset.videoId);
+            startProcessing(formData, button);
         }
+
+        // "Delete" buttons in any section
         else if (button.classList.contains('delete-btn')) {
             e.preventDefault();
             deleteItem(button);
