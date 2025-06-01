@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -132,6 +132,18 @@
         /* --- Card Styles --- */
         .video-card, .short-card { display: flex; flex-direction: column; border-radius: var(--border-radius); background-color: var(--light-gray); width: 320px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .video-card__thumb { width: 100%; height: 180px; object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; }
+        .no-thumbnail {
+            width: 100%;
+            height: 180px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            font-size: 0.9em;
+            text-align: center;
+        }
         .video-card__info { padding: 1rem; flex-grow: 1; font-weight: 600; }
         .video-card__actions { padding: 0 1rem 1rem 1rem; display: flex; gap: 0.5rem; }
 
@@ -206,11 +218,17 @@
             <div class="horizontal-scroll-container">
                 {% for video in videos %}
                 <div class="video-card" id="video-card-{{ video.video_id }}">
-                    <img src="{{ video.thumbnail_path }}" alt="Thumbnail" class="video-card__thumb" loading="lazy">
+                    {% if video.get_s3_thumbnail_url %}
+                        <img src="{{ video.get_s3_thumbnail_url }}" alt="Thumbnail" class="video-card__thumb" loading="lazy">
+                    {% else %}
+                        <div class="no-thumbnail">No Thumbnail Available</div>
+                    {% endif %}
                     <div class="video-card__info">{{ video.title }}</div>
                     <div class="video-card__actions">
                         <button type="button" class="use-btn btn btn-primary" data-video-id="{{ video.video_id }}"><span class="btn-text">Use</span><div class="spinner"></div></button>
-                        <a href="{{ video.file_path }}" target="_blank" class="btn btn-secondary">View</a>
+                        {% if video.get_s3_video_url %}
+                            <a href="{{ video.get_s3_video_url }}" target="_blank" class="btn btn-secondary">View</a>
+                        {% endif %}
                         <button type="button" class="delete-btn btn btn-danger" data-id="{{ video.video_id }}" data-type="video">Delete</button>
                     </div>
                 </div>
@@ -226,15 +244,21 @@
             <div class="horizontal-scroll-container" id="generated-shorts-scroll-container">
                 {% for short in shorts %}
                 <div class="short-card" id="short-card-{{ short.id }}">
-                    <video class="short-card__video" controls preload="metadata" poster="{{ short.thumbnail_path }}">
-                        <source src="{{ short.short_path }}" type="video/mp4">
-                    </video>
+                    {% if short.get_s3_short_url %}
+                        <video class="short-card__video" controls preload="metadata" {% if short.get_s3_thumbnail_url %}poster="{{ short.get_s3_thumbnail_url }}"{% endif %}>
+                            <source src="{{ short.get_s3_short_url }}" type="video/mp4">
+                        </video>
+                    {% else %}
+                        <div class="no-thumbnail">No Short Video Available</div>
+                    {% endif %}
                     <div class="short-card__content">
                         <h4>{{ short.title }}</h4>
                         <p>{{ short.description }}</p>
                     </div>
                     <div class="short-card__actions">
-                        <a href="{% url 'shorts_app:download_short' filename=short.short_path|slice:'14:' %}" class="btn btn-secondary">Download</a>
+                        {% if short.get_s3_short_url %}
+                            <a href="{% url 'shorts_app:download_short' filename=short.short_path|cut:settings.AWS_S3_GENERATED_SHORTS_FOLDER %}" class="btn btn-secondary">Download</a>
+                        {% endif %}
                         <button type="button" class="delete-btn btn btn-danger" data-id="{{ short.id }}" data-type="short">Delete</button>
                     </div>
                 </div>
@@ -243,6 +267,59 @@
             </div>
         </div>
     </div>
+    {% for video in videos %}
+    <div class="card mb-3">
+        <div class="row g-0">
+            <div class="col-md-4">
+                {% if video.get_s3_thumbnail_url %}
+                    <img src="{{ video.get_s3_thumbnail_url }}" alt="{{ video.title }}" class="img-fluid rounded-start">
+                {% else %}
+                    <div class="no-thumbnail">No Thumbnail</div>
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <p class="card-text">Duration: {{ video.duration }} seconds</p>
+                    {% if video.get_s3_video_url %}
+                        <video controls src="{{ video.get_s3_video_url }}" class="img-fluid mt-3"></video>
+                    {% endif %}
+                    <button class="btn btn-info btn-sm use-btn" data-video-id="{{ video.video_id }}">Use for Short</button>
+                    <button class="btn btn-danger btn-sm delete-btn" data-delete-url="{% url 'shorts_app:delete_video' video.video_id %}" data-confirm-message="Are you sure you want to delete this video and all its generated shorts?">Delete Video</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <h6>Generated Shorts:</h6>
+            <div class="row">
+                {% for short in video.shorts.all %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">{{ short.title }}</h6>
+                                {% if short.get_s3_thumbnail_url %}
+                                    <img src="{{ short.get_s3_thumbnail_url }}" alt="Short Thumbnail" class="img-fluid mb-2">
+                                {% endif %}
+                                {% if short.get_s3_short_url %}
+                                    <video controls src="{{ short.get_s3_short_url }}" class="img-fluid mb-2"></video>
+                                {% endif %}
+                                <p class="card-text"><small class="text-muted">{{ short.start_time }}s - {{ short.end_time }}s</small></p>
+                                {% if short.get_s3_short_url %}
+                                    <a href="{% url 'shorts_app:download_short' filename=short.short_path|cut:settings.AWS_S3_GENERATED_SHORTS_FOLDER %}" class="btn btn-primary btn-sm">Download Short</a>
+                                {% endif %}
+                                <button class="btn btn-danger btn-sm delete-btn" data-delete-url="{% url 'shorts_app:delete_short' short.id %}" data-confirm-message="Are you sure you want to delete this short?">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12"><p>No shorts generated for this video yet.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% empty %}
+    <p>No videos downloaded yet. Enter a YouTube URL above to get started!</p>
+{% endfor %}
 
 <script>
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;

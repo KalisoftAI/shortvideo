@@ -10,12 +10,35 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+from dotenv import load_dotenv # Import load_dotenv
+
+import sys
+print("DEBUG: Loading settings from:", __file__, file=sys.stderr)
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME') # Example region, change as needed
+
+if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
+    print("WARNING: AWS S3 credentials or bucket name not fully configured. S3 functionality will be disabled.")
+    AWS_S3_ENABLED = False
+else:
+    AWS_S3_ENABLED = True
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    # Base URLs for S3 objects
+    AWS_S3_YOUTUBE_VIDEO_FOLDER = 's3://kalisoft-clipcraftai/yt_video/'
+    AWS_S3_GENERATED_SHORTS_FOLDER = 's3://kalisoft-clipcraftai/shorts/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -91,7 +114,7 @@ ROOT_URLCONF = 'shorts_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], # Or whatever your DIRS path is
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,7 +122,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.settings', # THIS LINE IS CRITICAL
             ],
+            'libraries': {
+                'cut': 'shorts_app.templatetags.custom_filters',
+            }
         },
     },
 ]
@@ -163,5 +190,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # API Key for Google Gemini
-GEMINI_API_KEY = "AIzaSyCok9ZDKb3uNRcz2nIQBCvzrWPlAhT2WTI"
+# Gemini API Key - Also fetch from environment variables
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
