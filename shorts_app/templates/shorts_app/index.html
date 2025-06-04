@@ -10,66 +10,66 @@
     <style>
         :root {
             --primary-color: #007bff; --primary-hover: #0056b3;
-            --secondary-color: #6c757d; --secondary-hover: #5a6268;
-            --success-color: #28a745; --danger-color: #dc3545;
-            --warning-color: #ffc107; --warning-bg: #fff3cd;
-            --light-gray: #f8f9fa; --medium-gray: #e9ecef; --dark-gray: #6c757d;
+            --secondary-color: #6c757d; --danger-color: #dc3545;
+            --light-gray: #f8f9fa; --medium-gray: #e9ecef; --dark-gray: #343a40;
             --text-color: #212529; --border-radius: 12px; --box-shadow: 0 6px 12px rgba(0,0,0,0.08);
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: var(--text-color); margin: 0; padding: 2rem; line-height: 1.6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: var(--text-color); margin: 0; padding: 1rem 2rem; line-height: 1.6; }
         .container { max-width: 1200px; margin: auto; }
-        h2 { border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; font-weight: 700; }
+        h2 { border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; font-weight: 700; margin-bottom: 1.5rem; }
         .card { background: #fff; padding: 1.5rem 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 2.5rem; }
 
-        form { display: flex; gap: 1rem; align-items: center; }
-        input[type="text"] { flex-grow: 1; padding: 14px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; }
+        /* --- Forms & Buttons (YouTube Bar Fixed) --- */
+        .process-form { display: flex; gap: 1rem; align-items: center; }
+        .process-form input[type="text"] { flex-grow: 1; padding: 14px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; }
 
-        button, .btn {
+        .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 14px 22px;
-            border: none; color: white; font-size: 1rem; font-weight: 600;
+            border: none; color: white; font-size: 1rem; font-weight: 600; flex-shrink: 0;
             border-radius: var(--border-radius); cursor: pointer; text-decoration: none; transition: all 0.2s ease;
         }
-        .btn:hover, button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        button:disabled { background-color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn:disabled { background-color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
         .btn-primary { background-color: var(--primary-color); }
-        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
         .btn-secondary { background-color: var(--secondary-color); }
-        .btn-secondary:hover:not(:disabled) { background-color: var(--secondary-hover); }
         .btn-danger { background-color: var(--danger-color); }
 
-        .progress-bar-container { display: none; margin-top: 1rem; }
-        .progress-text { font-weight: 500; color: var(--dark-gray); }
+        /* --- Horizontal Scroll Container --- */
+        .horizontal-scroll-container { display: flex; overflow-x: auto; gap: 1.5rem; padding: 1.5rem 0.5rem; }
+        .horizontal-scroll-container > * { flex-shrink: 0; }
 
-        /* --- Horizontal Scrolling --- */
-        .horizontal-scroll-wrapper { position: relative; }
-        .horizontal-scroll-container { display: flex; overflow-x: auto; gap: 1.5rem; padding: 1rem; margin: 0 -1rem; scrollbar-width: none; -ms-overflow-style: none; }
-        .horizontal-scroll-container::-webkit-scrollbar { display: none; }
+        /* --- Suggestion Grid --- */
+        .suggestions-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+        .suggestions-grid > .clip-card, .suggestions-grid > .manual-card { flex: 1 1 48%; min-width: 400px; box-sizing: border-box; }
 
-        /* Card Styles */
-        .video-card, .clip-card, .short-card { flex-shrink: 0; display: flex; flex-direction: column; }
+        /* --- Card Base Styles --- */
+        .video-card, .short-card, .clip-card, .manual-card { display: flex; flex-direction: column; border-radius: var(--border-radius); }
 
-        .video-card { width: 300px; background-color: var(--light-gray); border-radius: var(--border-radius); }
-        .video-card img { width: 100%; height: 160px; object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; }
-        .video-card .info { padding: 1rem; flex-grow: 1; }
-        .video-card .info strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .video-card .actions { padding: 0 1rem 1rem 1rem; display: flex; gap: 0.5rem; }
+        .video-card { width: 320px; background-color: var(--light-gray); }
+        /* Image src for S3 will be a full URL, no need for /media/ prefix in HTML.
+           Django's FileField.url property will provide the complete S3 URL. */
+        .video-card__thumb { width: 100%; height: 180px; object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; }
+        .video-card__info { padding: 1rem; flex-grow: 1; }
+        .video-card__actions { padding: 0 1rem 1rem 1rem; display: flex; gap: 0.5rem; }
 
-        .clip-card { width: 380px; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); padding: 1.5rem; }
-        .clip-card h4 { margin-top: 0; }
-        .clip-tags .tag { display: inline-block; background: var(--medium-gray); color: var(--dark-gray); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin: 2px; }
-        .copyright-warning { padding: 0.5rem; margin-top: 1rem; background-color: var(--warning-bg); border: 1px solid var(--warning-color); border-radius: 8px; font-size: 0.9em; }
+        .short-card { width: 320px; background-color: var(--light-gray); }
+        /* Video src for S3 will be a full URL */
+        .short-card__video { width:100%; aspect-ratio:9/16; background:#111; border-radius:var(--border-radius) var(--border-radius) 0 0; }
+        .short-card__content { padding:1rem; flex-grow:1; }
+        .short-card__actions { padding:0 1rem 1rem 1rem; display:flex; gap:0.5rem; }
 
-        .short-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        .short-card { background: var(--light-gray); border-radius: var(--border-radius); }
-        .short-card video { width: 100%; aspect-ratio: 9/16; background: #111; border-radius: var(--border-radius) var(--border-radius) 0 0; }
-        .short-card .content { padding: 1rem; }
-        .short-card .content h4 { margin: 0 0 0.5rem 0; }
-        .short-card .content p { font-size: 0.95em; color: var(--dark-gray); }
-        .short-card .actions { padding: 0 1rem 1rem 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        /* --- Progress Bars --- */
+        .progress-indicator { display: none; margin-top: 1.5rem; }
+        .progress-text { font-weight: 500; color: var(--dark-gray); margin-bottom: 0.5rem; }
+        .progress-bar-bg { width: 100%; background: var(--medium-gray); border-radius: 8px; overflow: hidden; height: 12px; }
+        .progress-bar-fill { width: 0%; height: 100%; background-color: var(--primary-color); transition: width 0.4s ease; }
+        .progress-bar-fill.indeterminate { animation: progress-indeterminate 1.5s ease-in-out infinite; background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent); background-size: 40px 40px; }
+        @keyframes progress-indeterminate { 0% { width: 0%; background-position: 40px 0; } 50% { width: 100%; } 100% { width: 0%; background-position: 0 0; } }
 
-        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; display: none; }
-        button.loading .spinner { display: block; }
-        button.loading .btn-text { display: none; }
+        /* --- Spinner --- */
+        .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; }
+        .btn.loading .spinner { display: block; }
+        .btn.loading .btn-text { display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -77,61 +77,77 @@
     <div class="container">
         <div class="card">
             <h2>1. Process a Video</h2>
-            <form id="video-form">
+            <form id="video-form" class="process-form">
                 {% csrf_token %}
                 <input type="text" id="video_url" name="video_url" placeholder="Enter New YouTube Video URL">
                 <button type="submit" id="process-btn" class="btn btn-primary"><span class="btn-text">Process</span><div class="spinner"></div></button>
             </form>
-            <div id="progress-container" class="progress-bar-container">
-                <p id="progress-text" class="progress-text"></p>
+            <div id="processing-progress" class="progress-indicator">
+                <p id="processing-progress-text" class="progress-text"></p>
+                <div class="progress-bar-bg"><div id="processing-progress-bar" class="progress-bar-fill"></div></div>
             </div>
-        </div>
-
-        <div id="results-container"></div> <div class="card">
-            <h2>Previously Processed Videos</h2>
-            <div class="horizontal-scroll-wrapper">
-                <div id="processed-videos-list" class="horizontal-scroll-container">
-                    {% for video in videos %}
-                    <div class="video-card" id="video-card-{{ video.video_id }}">
-                        <img src="{{ video.thumbnail_path }}" alt="Thumbnail" loading="lazy">
-                        <div class="info">
-                            <strong>{{ video.title }}</strong>
-                            <p><small>Duration: {{ video.duration|floatformat:"0" }}s</small></p>
-                        </div>
-                        <div class="actions">
-                            <button class="use-btn btn-primary" data-video-id="{{ video.video_id }}"><span class="btn-text">Use</span><div class="spinner"></div></button>
-                            <a href="{{ video.file_path }}" target="_blank" class="btn btn-secondary">View</a>
-                            <button class="delete-btn btn-danger" data-id="{{ video.video_id }}" data-type="video">Delete</button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% if not videos %}<p>No videos processed yet.</p>{% endif %}
-                </div>
+            <div id="generation-progress" class="progress-indicator">
+                <p id="generation-progress-text" class="progress-text"></p>
+                <div class="progress-bar-bg"><div id="generation-progress-bar" class="progress-bar-fill"></div></div>
             </div>
         </div>
 
         <div class="card">
-            <h2>My Generated Shorts</h2>
-            <div id="generated-shorts-list" class="short-grid">
-                {% for short in shorts %}
-                <div class="short-card" id="short-card-{{ short.id }}">
-                    <video controls preload="metadata" poster="{{ short.thumbnail_path }}">
-                        <source src="{{ short.short_path }}" type="video/mp4">
-                    </video>
-                    <div class="content">
-                        <h4>{{ short.title }}</h4>
-                        <p>{{ short.description }}</p>
-                        <div class="clip-tags">
-                            <strong>Tags:</strong> {% for tag in short.tags %}<span class="tag">{{ tag }}</span>{% endfor %}
-                        </div>
-                    </div>
-                    <div class="actions">
-                        <a href="{% url 'shorts_app:download_short' filename=short.short_path|slice:'14:' %}" class="btn btn-secondary">Download</a>
-                        <button class="delete-btn btn-danger" data-id="{{ short.id }}" data-type="short">Delete</button>
+            <h2>Previously Processed Videos</h2>
+            <div class="horizontal-scroll-container">
+                {% for video in videos %}
+                <div class="video-card" id="video-card-{{ video.video_id }}">
+                    {# Check if thumbnail_path exists before trying to get its URL #}
+                    {% if video.thumbnail_path %}
+                        <img src="{{ video.thumbnail_path.url }}" alt="Thumbnail" class="video-card__thumb" loading="lazy">
+                    {% else %}
+                        {# Fallback placeholder image if no thumbnail is available #}
+                        <img src="https://placehold.co/320x180/cccccc/333333?text=No+Thumbnail" alt="No Thumbnail" class="video-card__thumb" loading="lazy">
+                    {% endif %}
+                    <div class="video-card__info"><strong>{{ video.title }}</strong></div>
+                    <div class="video-card__actions">
+                        <button type="button" class="use-btn btn btn-primary" data-video-id="{{ video.video_id }}"><span class="btn-text">Use</span><div class="spinner"></div></button>
+                        {# Check if file_path exists before trying to get its URL #}
+                        {% if video.file_path %}
+                            <a href="{{ video.file_path.url }}" target="_blank" class="btn btn-secondary">View</a>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary" disabled>No Video</button>
+                        {% endif %}
+                        <button type="button" class="delete-btn btn btn-danger" data-id="{{ video.video_id }}" data-type="video">Delete</button>
                     </div>
                 </div>
                 {% endfor %}
-                {% if not shorts %}<p id="no-shorts-message">No shorts have been generated yet.</p>{% endif %}
+                {% if not videos %}<p>No videos processed yet.</p>{% endif %}
+            </div>
+        </div>
+
+        <div id="results-container"></div>
+
+        <div class="card">
+            <h2>My Generated Shorts</h2>
+            <div class="horizontal-scroll-container" id="generated-shorts-scroll-container">
+                {% for short in shorts %}
+                <div class="short-card" id="short-card-{{ short.id }}">
+                    {# Check if thumbnail_path exists before trying to get its URL #}
+                    {% if short.thumbnail_path %}
+                        <video class="short-card__video" controls preload="metadata" poster="{{ short.thumbnail_path.url }}">
+                            <source src="{{ short.short_path.url }}" type="video/mp4">
+                        </video>
+                    {% else %}
+                        {# Fallback placeholder if no thumbnail #}
+                        <video class="short-card__video" controls preload="metadata" poster="https://placehold.co/320x568/cccccc/333333?text=No+Thumbnail">
+                            <source src="{{ short.short_path.url }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+                    <div class="short-card__content"><h4>{{ short.title }}</h4><p>{{ short.description }}</p></div>
+                    <div class="short-card__actions">
+                        {# Pass the short's UUID to the download_short view #}
+                        <button type="button" class="btn btn-secondary download-btn" data-short-id="{{ short.id }}">Download</button>
+                        <button type="button" class="delete-btn btn btn-danger" data-id="{{ short.id }}" data-type="short">Delete</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not shorts %}<p>No shorts have been generated yet.</p>{% endif %}
             </div>
         </div>
     </div>
@@ -146,31 +162,44 @@
         button.classList.toggle('loading', isLoading);
     }
 
+    function showProgress(type, show, text = '', percentage = 0) {
+        const container = document.getElementById(`${type}-progress`);
+        const textElem = document.getElementById(`${type}-progress-text`);
+        const barElem = document.getElementById(`${type}-progress-bar`);
+        if (!container || !textElem || !barElem) {
+            console.error(`Progress elements not found for type: ${type}`);
+            return;
+        }
+
+        if (show) {
+            textElem.textContent = text;
+            barElem.classList.remove('indeterminate');
+            barElem.style.width = `${percentage}%`;
+            if (percentage === -1) { // Indeterminate state for generation
+                barElem.classList.add('indeterminate');
+            }
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
     async function startProcessing(formData, button) {
         toggleButtonLoading(button, true);
         document.getElementById('results-container').innerHTML = '';
-        const progressContainer = document.getElementById('progress-container');
-        const progressText = document.getElementById('progress-text');
-
-        progressContainer.style.display = 'block';
-        progressText.textContent = 'Initializing...';
+        showProgress('generation', false); // Ensure generation progress is hidden
+        showProgress('processing', true, 'Initializing task...', 0);
 
         try {
-            const response = await fetch("{% url 'shorts_app:process_video' %}", {
-                method: 'POST', body: formData, headers: {'X-CSRFToken': csrfToken},
-            });
+            const response = await fetch("{% url 'shorts_app:process_video' %}", { method: 'POST', body: formData, headers: {'X-CSRFToken': csrfToken} });
             const data = await response.json();
             if (data.task_id) {
-                progressInterval = setInterval(() => checkProgress(data.task_id, button), 2500);
-            } else {
-                alert(`Error: ${data.message || 'Unknown error'}`);
-                toggleButtonLoading(button, false);
-                progressContainer.style.display = 'none';
-            }
+                progressInterval = setInterval(() => checkProgress(data.task_id, button), 2000);
+            } else { throw new Error(data.message || 'Failed to start task.'); }
         } catch (error) {
-            alert('An unexpected error occurred during processing.');
+            alert(error.message);
             toggleButtonLoading(button, false);
-            progressContainer.style.display = 'none';
+            showProgress('processing', false);
         }
     }
 
@@ -179,128 +208,146 @@
             .then(response => response.json())
             .then(data => {
                 if (!data) return;
-                const progressText = document.getElementById('progress-text');
-                progressText.textContent = data.message || 'Processing...';
+                let currentProgress = typeof data.progress === 'string' ? parseFloat(data.progress.replace('%','')) : data.progress;
+                showProgress('processing', true, data.message || 'Processing...', currentProgress || 0);
 
                 if (data.status === 'complete') {
                     clearInterval(progressInterval);
                     toggleButtonLoading(button, false);
-                    document.getElementById('progress-container').style.display = 'none';
-                    if (document.getElementById('video_url')) document.getElementById('video_url').value = '';
+                    setTimeout(() => showProgress('processing', false), 2000);
+                    document.getElementById('video_url').value = '';
                     displayClips(data.result);
                 } else if (data.status === 'error') {
                     clearInterval(progressInterval);
                     toggleButtonLoading(button, false);
-                    progressText.textContent = `Error: ${data.message}`;
+                    document.getElementById('processing-progress-text').textContent = `Error: ${data.message}`;
                 }
             });
     }
 
-    function displayClips(data) {
-        let clipsHtml = '';
-        if (data.suggested_clips && data.suggested_clips.length > 0) {
-            data.suggested_clips.forEach((clip, index) => {
-                const tagsHtml = clip.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-                clipsHtml += `
-                    <div class="clip-card" data-clip-index="${index}">
-                        <h4>${clip.title}</h4>
-                        <p><strong>Time:</strong> ${clip.start_time} - ${clip.end_time}</p>
-                        <p><i>${clip.description}</i></p>
-                        <div class="clip-tags">${tagsHtml}</div>
-                        ${clip.copyright_concern ? '<p class="copyright-warning">⚠️ AI suspects potential copyright material.</p>' : ''}
-                        <div style="margin: 1rem 0;">
-                           <strong>Aspect Ratio:</strong>
-                           <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked> 📱 Vertical</label>
-                           <label><input type="radio" name="aspect_ratio_${index}" value="16:9"> 💻 Horizontal</label>
-                           <label><input type="radio" name="aspect_ratio_${index}" value="original"> 🖼️ Original</label>
-                        </div>
-                        <button class="generate-btn btn-primary" data-video-id="${data.video_id}"><span class="btn-text">Create Short</span><div class="spinner"></div></button>
-                        <div class="error-message" style="color:var(--danger-color); margin-top:0.5rem;"></div>
-                    </div>`;
+    // --- THIS FUNCTION IS CRITICAL FOR ATTACHING LISTENERS TO DYNAMIC BUTTONS ---
+    function attachCreationEventListeners(container, videoId, clipsData) {
+        container.querySelectorAll('.generate-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const card = button.closest('.clip-card');
+                if (!card) { console.error("Could not find parent .clip-card for generate-btn"); return; }
+                const clipIndex = card.dataset.clipIndex;
+                if (clipIndex === undefined || !clipsData || clipsData[clipIndex] === undefined) {
+                    console.error("Clip data or index missing for generate-btn", clipIndex, clipsData); return;
+                }
+                const payload = {
+                    video_id: videoId,
+                    clip_data: clipsData[clipIndex],
+                    aspect_ratio: card.querySelector(`input[name="aspect_ratio_${clipIndex}"]:checked`).value
+                };
+                handleShortGeneration(payload, button);
             });
-        } else {
-            clipsHtml = "<p>The AI could not find any suitable clips to suggest from this video.</p>";
+        });
+
+        const fallbackBtn = container.querySelector('.fallback-generate-btn');
+        if (fallbackBtn) {
+            fallbackBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const card = fallbackBtn.closest('.clip-card');
+                if (!card) { console.error("Could not find parent .clip-card for fallback-btn"); return; }
+                const payload = {
+                    video_id: videoId,
+                    clip_data: { start_time: '00:00', end_time: '00:20', title: "Fallback Clip", description: "First 20 seconds.", tags: ["intro", "fallback"] },
+                    aspect_ratio: card.querySelector('input[name="aspect_ratio_fallback"]:checked').value
+                };
+                handleShortGeneration(payload, fallbackBtn);
+            });
         }
 
-        const resultsContainer = document.getElementById('results-container');
-        resultsContainer.innerHTML = `
-            <div class="card">
-                <h2>2. AI Clip Suggestions for "${data.video_title}"</h2>
-                <div class="horizontal-scroll-wrapper">
-                    <div class="horizontal-scroll-container">${clipsHtml}</div>
-                </div>
-            </div>`;
-        resultsContainer.dataset.clipsData = JSON.stringify(data.suggested_clips);
-        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const manualBtn = container.querySelector('.manual-generate-btn');
+        if(manualBtn) {
+            manualBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const card = manualBtn.closest('.manual-card');
+                if (!card) { console.error("Could not find parent .manual-card for manual-btn"); return; }
+                const startTime = card.querySelector('#manual-start-time').value.trim();
+                const endTime = card.querySelector('#manual-end-time').value.trim();
+                const errorDiv = card.querySelector('#error-manual');
+
+                if (!/^\d{1,4}:\d{2}$/.test(startTime) || !/^\d{1,4}:\d{2}$/.test(endTime)) {
+                    errorDiv.textContent = 'Please use MM:SS format.'; return;
+                }
+                errorDiv.textContent = '';
+                const payload = {
+                    video_id: videoId,
+                    clip_data: { start_time: startTime, end_time: endTime, title: "Manual Clip", description: `Manual clip: ${startTime}-${endTime}`, tags: ["manual"] },
+                    aspect_ratio: card.querySelector('input[name="manual_aspect_ratio"]:checked').value
+                };
+                handleShortGeneration(payload, manualBtn);
+            });
+        }
     }
 
-    async function generateShort(button) {
-        toggleButtonLoading(button, true);
-        const card = button.closest('.clip-card');
-        const errorDiv = card.querySelector('.error-message');
-        errorDiv.textContent = '';
+    function displayClips(data) {
+        const resultsContainer = document.getElementById('results-container');
+        let contentHtml = '';
 
-        const clipIndex = card.dataset.clipIndex;
-        const videoId = button.dataset.videoId;
-        const clipsData = JSON.parse(document.getElementById('results-container').dataset.clipsData);
-        const aspectRatio = card.querySelector(`input[name="aspect_ratio_${clipIndex}"]:checked`).value;
+        if (data.suggested_clips && data.suggested_clips.length > 0) {
+            data.suggested_clips.forEach((clip, index) => {
+                // Added text labels for aspect ratios
+                contentHtml += `<div class="clip-card" data-clip-index="${index}"><h4>${clip.title}</h4><p><strong>Time:</strong> ${clip.start_time} - ${clip.end_time}</p><div style="margin:1rem 0;"><strong>Aspect Ratio:</strong> <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="aspect_ratio_${index}" value="16:9">💻 Horizontal</label> <label><input type="radio" name="aspect_ratio_${index}" value="original">🖼️ Original</label></div><button type="button" class="generate-btn btn btn-primary" data-video-id="${data.video_id}"><span class="btn-text">Create Short</span><div class="spinner"></div></button></div>`;
+            });
+        } else {
+            contentHtml = `<div class="clip-card"><h4>Fallback Suggestion</h4><p>A quick 20-second clip from the beginning.</p><p><strong>Time:</strong> 00:00 - 00:20</p><div style="margin:1rem 0;"><strong>Aspect Ratio:</strong> <label><input type="radio" name="aspect_ratio_fallback" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="aspect_ratio_fallback" value="16:9">💻 Horizontal</label> <label><input type="radio" name="aspect_ratio_fallback" value="original">🖼️ Original</label></div><button type="button" class="fallback-generate-btn btn btn-primary" data-video-id="${data.video_id}"><span class="btn-text">Create Fallback</span><div class="spinner"></div></button></div><div class="manual-card"><h4>Create Manually</h4><p>Enter your own start and end times.</p><div style="display:flex;gap:1rem;align-items:center;margin:1rem 0;"><input type="text" id="manual-start-time" placeholder="Start (MM:SS)" style="width:150px;"><span>to</span><input type="text" id="manual-end-time" placeholder="End (MM:SS)" style="width:150px;"></div><div><strong>Aspect Ratio:</strong> <label><input type="radio" name="manual_aspect_ratio" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="manual_aspect_ratio" value="16:9">💻 Horizontal</label> <label><input type="radio" name="manual_aspect_ratio" value="original">🖼️ Original</label></div><button type="button" class="manual-generate-btn btn btn-primary" data-video-id="${data.video_id}" style="margin-top:1rem;"><span class="btn-text">Create Manual</span><div class="spinner"></div></button><div id="error-manual" style="color:var(--danger-color);margin-top:0.5rem;"></div></div>`;
+        }
+
+        const suggestionsCardHTML = `
+            <div class="card">
+                <h2>2. Create a Short from "${data.video_title}"</h2>
+                <div class="suggestions-grid">${contentHtml}</div>
+            </div>`;
+        resultsContainer.innerHTML = suggestionsCardHTML;
+        // Store clipsData on the suggestions-grid itself for easier access by listeners
+        const suggestionsGrid = resultsContainer.querySelector('.suggestions-grid');
+        if (suggestionsGrid) {
+            suggestionsGrid.dataset.clipsData = JSON.stringify(data.suggested_clips);
+        }
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // --- ATTACH EVENT LISTENERS TO NEWLY CREATED BUTTONS ---
+        attachCreationEventListeners(resultsContainer, data.video_id, data.suggested_clips);
+    }
+
+    async function handleShortGeneration(payload, button) {
+        toggleButtonLoading(button, true);
+        document.querySelectorAll('.generate-btn, .fallback-generate-btn, .manual-generate-btn').forEach(b => b.disabled = true);
+        showProgress('generation', true, 'Creating your short... This may take a moment.', -1);
 
         try {
             const response = await fetch("{% url 'shorts_app:generate_short' %}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ video_id: videoId, clip_data: clipsData[clipIndex], aspect_ratio: aspectRatio }),
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify(payload)
             });
             const result = await response.json();
             if (result.status === 'success') {
                 alert('Short created successfully! The page will now reload.');
                 window.location.reload();
-            } else {
-                errorDiv.textContent = `Error: ${result.message}`;
-            }
+            } else { throw new Error(result.message); }
         } catch (error) {
-            errorDiv.textContent = 'An unexpected error occurred.';
-        } finally {
+            alert(`Error creating short: ${error.message || 'An unexpected error occurred.'}`);
+        } finally { // Ensure UI is reset in all cases
             toggleButtonLoading(button, false);
+            document.querySelectorAll('.generate-btn, .fallback-generate-btn, .manual-generate-btn').forEach(b => b.disabled = false);
+            showProgress('generation', false);
         }
     }
 
-    async function deleteItem(button) {
-        const type = button.dataset.type;
-        const id = button.dataset.id;
-        const url = type === 'video' ? `/delete_video/${id}/` : `/delete_short/${id}/`;
-        const cardId = type === 'video' ? `video-card-${id}` : `short-card-${id}`;
-
-        if (confirm(`Are you sure you want to permanently delete this ${type}?`)) {
-            button.disabled = true;
-            try {
-                const response = await fetch(url, { method: 'POST', headers: {'X-CSRFToken': csrfToken }});
-                if (response.ok) {
-                    const cardElement = document.getElementById(cardId);
-                    cardElement.style.transition = 'opacity 0.5s';
-                    cardElement.style.opacity = '0';
-                    setTimeout(() => cardElement.remove(), 500);
-                } else {
-                    const data = await response.json();
-                    alert(`Error: ${data.message || 'Could not delete item.'}`);
-                    button.disabled = false;
-                }
-            } catch (err) {
-                 alert('An error occurred during deletion.');
-                 button.disabled = false;
-            }
-        }
-    }
-
-    // --- Main Event Listeners ---
+    // --- Main Event Listeners for STATIC buttons ---
     document.getElementById('video-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        startProcessing(new FormData(e.target), e.target.querySelector('button'));
+        e.preventDefault(); // Prevent default form submission
+        startProcessing(new FormData(e.target), e.target.querySelector('button.btn'));
     });
 
-    document.body.addEventListener('click', (e) => {
-        const button = e.target.closest('button');
-        if (!button) return;
+    // Event listener for "Previously Processed Videos" section for USE and DELETE
+    document.querySelector('.card .horizontal-scroll-container').addEventListener('click', e => {
+        const button = e.target.closest('button.btn');
+        if(!button) return;
+        e.preventDefault();
 
         if (button.classList.contains('use-btn')) {
             const formData = new FormData();
@@ -308,10 +355,63 @@
             startProcessing(formData, button);
         } else if (button.classList.contains('delete-btn')) {
             deleteItem(button);
-        } else if (button.classList.contains('generate-btn')) {
-            generateShort(button);
         }
     });
+
+    // Event listener for "My Generated Shorts" section for DELETE
+    document.getElementById('generated-shorts-scroll-container').addEventListener('click', e => {
+        const button = e.target.closest('button.delete-btn');
+        if (button) {
+            e.preventDefault();
+            deleteItem(button);
+        }
+    });
+
+    // Event listener for "My Generated Shorts" section for DOWNLOAD and DELETE
+    document.getElementById('generated-shorts-scroll-container').addEventListener('click', e => {
+        const button = e.target.closest('button.btn'); // Check if any button was clicked
+        if(!button) return; // If not a button, do nothing
+
+        if (button.classList.contains('download-btn')) { // Agar Download button click hua
+            e.preventDefault(); // Default behaviour ko roko (jo ki anchor tag ka hota)
+            const shortId = button.dataset.shortId;
+            const downloadUrl = `/download_short/${shortId}/`; // URL banayein
+
+            // Download ko naye tab mein khole (taki current page reload na ho, balki download start ho)
+            window.open(downloadUrl, '_blank');
+
+            // Ek chhoti delay ke baad current page ko reload karein
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000); // 1 second (1000 milliseconds) ka delay
+        } else if (button.classList.contains('delete-btn')) { // Agar Delete button click hua
+            e.preventDefault();
+            deleteItem(button);
+        }
+    });
+
+    async function deleteItem(button) {
+        const type = button.dataset.type;
+        const id = button.dataset.id;
+        const url = type === 'video' ? `/delete_video/${id}/` : `/delete_short/${id}/`;
+        if (confirm(`Are you sure you want to permanently delete this ${type}?`)) {
+            toggleButtonLoading(button, true);
+            try {
+                const response = await fetch(url, { method: 'POST', headers: {'X-CSRFToken': csrfToken }});
+                if (response.ok) {
+                    const cardId = type === 'video' ? `video-card-${id}` : `short-card-${id}`;
+                    document.getElementById(cardId)?.remove();
+                } else {
+                    const data = await response.json();
+                    alert(`Error: ${data.message || 'Could not delete item.'}`);
+                }
+            } catch (err) {
+                alert('An error occurred during deletion.');
+            } finally {
+                toggleButtonLoading(button, false);
+            }
+        }
+    }
 </script>
 </body>
 </html>

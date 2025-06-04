@@ -15,7 +15,9 @@ urlpatterns = [
 
     # Short generation and management URLs
     path('generate_short/', views.generate_short, name='generate_short'),
-    path('download_short/<str:filename>/', views.download_short, name='download_short'),
+    # Changed download to use short_id
+    path('download_short/<uuid:short_id>/', views.download_short, name='download_short'),
+
 
     # Deletion URLs
     path('delete_video/<str:video_id>/', views.delete_video, name='delete_video'),

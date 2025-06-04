@@ -1,44 +1,27 @@
-# from django.db import models
-#
-# # Create your models here.
-# # shorts_app/models.py
-#
-# from django.db import models
-#
-#
-# class DownloadedVideo(models.Model):
-#     # The unique 11-character ID from the YouTube URL (e.g., dQw4w9WgXcQ)
-#     video_id = models.CharField(max_length=20, primary_key=True, unique=True)
-#
-#     # The title of the video
-#     title = models.CharField(max_length=255)
-#
-#     # The duration in total seconds
-#     duration = models.IntegerField()
-#
-#     # The relative path to the video file in your MEDIA_ROOT
-#     # e.g., /media/videos/dQw4w9WgXcQ.mp4
-#     file_path = models.CharField(max_length=512)
-#
-#     # The date and time the video was downloaded
-#     downloaded_at = models.DateTimeField(auto_now_add=True)
-#
-#     def __str__(self):
-#         return f"{self.title} ({self.video_id})"
-
 # shorts_app/models.py
-
-# shorts_app/models.py
-# In shorts_app/models.py
 import uuid
 from django.db import models
+from django.conf import settings
+from storages.backends.s3boto3 import S3Boto3Storage # Keep this for video files if still on S3
+
+# Custom storage classes. Remove 'location' from these classes.
+# The S3 path will be determined by what's stored in the FileField directly in views.py.
+class YoutubeVideoStorage(S3Boto3Storage):
+    file_overwrite = False
+
+class ShortsStorage(S3Boto3Storage):
+    file_overwrite = False
+
 
 class DownloadedVideo(models.Model):
     video_id = models.CharField(max_length=20, unique=True, primary_key=True)
     title = models.CharField(max_length=255)
     duration = models.IntegerField()
-    file_path = models.CharField(max_length=512)
-    thumbnail_path = models.CharField(max_length=512, null=True, blank=True)
+    # Use FileField with custom storage for S3 for video files
+    file_path = models.FileField(storage=YoutubeVideoStorage())
+    # CHANGE START: Remove custom storage for thumbnail_path
+    thumbnail_path = models.FileField(null=True, blank=True) # This will use default local storage
+    # CHANGE END
     suggestions = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -51,12 +34,13 @@ class GeneratedShort(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     tags = models.JSONField(default=list)
-    short_path = models.CharField(max_length=512)
-    thumbnail_path = models.CharField(max_length=512)
-    start_time = models.CharField(max_length=12)
-    end_time = models.CharField(max_length=12)
+    # Use FileField with custom storage for S3 for short videos
+    short_path = models.FileField(storage=ShortsStorage())
+    thumbnail_path = models.FileField(null=True, blank=True) # Also change this for shorts thumbnails if you want them local
+    status = models.CharField(max_length=50, default='pending') # e.g., 'pending', 'processing', 'completed', 'failed'
+    progress = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Short: {self.title}"
-
+        return self.title

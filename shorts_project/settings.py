@@ -7,11 +7,19 @@ For more information on this file, see
 https://docs.djangoproject.com/en/4.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/4.2/ref/settings/
+https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 """
 
 from pathlib import Path
 import os
+import logging
+# Import S3Boto3Storage directly for inheritance
+from storages.backends.s3boto3 import S3Boto3Storage
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!7#(gj$j&nzn-*8$s#8w&$(z@&2t5r(lnk)ek=)vkj!)#o7z-q'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-!7#(gj$j&nzn-*8$s#8w&$(z@&2t5r(lnk)ek=)vkj!)#o7z-q')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
 # Application definition
@@ -39,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shorts_app',
+    'storages', # Add django-storages here
 ]
 
 MIDDLEWARE = [
@@ -159,8 +168,28 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Media files (User uploaded content) - This will be handled by S3
 MEDIA_URL = '/media/'
+# MEDIA_ROOT is not directly used for S3, but still good to define for local development fallback if needed
 MEDIA_ROOT = BASE_DIR / 'media'
 
+
+## AWS S3 Settings
+# IMPORTANT: For production, use environment variables for these values!
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+# CORRECTED: Pass the environment variable KEY, and a default VALUE
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None # Or 'public-read' if you want publicly readable files
+
+# Define custom storage for different folders, inheriting directly from S3Boto3Storage
+# This line should now correctly use the resolved AWS_STORAGE_BUCKET_NAME
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 # API Key for Google Gemini
-GEMINI_API_KEY = "AIzaSyCok9ZDKb3uNRcz2nIQBCvzrWPlAhT2WTI"
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', "AIzaSyCok9ZDKb3uNRcz2nIQBCvzrWPlAhT2WTI")
+

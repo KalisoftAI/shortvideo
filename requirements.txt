@@ -6,3 +6,4 @@ webvtt-py
 google-api-python-client
 google-auth-oauthlib
 gunicorn
+boto3 
