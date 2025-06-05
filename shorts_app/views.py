@@ -6,26 +6,25 @@ import re
 import threading
 import webvtt
 from urllib.parse import urlparse, parse_qs
-import tempfile
-import shutil # Import shutil for moving files
+import tempfile # Import tempfile for temporary local storage
 
 from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseRedirect, Http404
 from django.core.cache import cache
-from django.core.files import File
+from django.core.files import File # To wrap local files for S3 upload
 from yt_dlp import YoutubeDL
 from moviepy.editor import VideoFileClip, CompositeVideoClip, ColorClip
 from moviepy.video.fx.all import crop, resize
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError  # Import boto3 for S3 interactions
 
 from .models import DownloadedVideo, GeneratedShort
 import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
-# --- Configure Gemini ---
+# --- Configure Gemini (Unchanged) ---
 genai_configured = False
 try:
     if settings.GEMINI_API_KEY:
@@ -39,54 +38,20 @@ except Exception as e:
 
 # Initialize S3 client outside of functions for efficiency
 s3_client = None
-if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.AWS_STORAGE_BUCKET_NAME and settings.AWS_S3_REGION_NAME:
+if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.AWS_STORAGE_BUCKET_NAME:
     try:
         s3_client = boto3.client(
             's3',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-            config=boto3.session.Config(signature_version='s3v4')
+            region_name=settings.AWS_S3_REGION_NAME
         )
-        logger.info("S3 client initialized successfully.")
-    except ClientError as e:
-        logger.error(f"Failed to initialize S3 client: {e}")
-else:
-    logger.warning("AWS S3 credentials not fully configured. S3 operations will be disabled.")
+    except Exception as e:
+        logger.error(f"Error initializing S3 client: {e}. S3 features disabled.")
 
-# Helper to delete files from S3
-def _delete_files_s3(s3_keys):
-    if not s3_client:
-        logger.error("S3 client not initialized. Cannot delete files from S3.")
-        return
-
-    try:
-        if s3_keys:
-            objects_to_delete = [{'Key': key} for key in s3_keys if key]
-            if objects_to_delete:
-                s3_client.delete_objects(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    Delete={'Objects': objects_to_delete}
-                )
-                logger.info(f"Deleted S3 objects: {s3_keys}")
-    except ClientError as e:
-        logger.error(f"Error deleting S3 objects {s3_keys}: {e}")
-
-# Helper to delete local files
-def _delete_files_local(file_paths):
-    for file_path in file_paths:
-        # file_path might be stored as /media/some_image.jpg
-        # We need to get the path relative to MEDIA_ROOT
-        relative_path = file_path.replace(settings.MEDIA_URL, '', 1)
-        full_path = os.path.join(settings.MEDIA_ROOT, relative_path)
-        if os.path.exists(full_path):
-            try:
-                os.remove(full_path)
-                logger.info(f"Deleted local file: {full_path}")
-            except OSError as e:
-                logger.error(f"Error deleting local file {full_path}: {e}")
-
+# --- AI Suggestion, Get YouTube ID, Index, Check Progress (Unchanged) ---
 def get_ai_suggested_clips(transcript: str, video_duration: int):
+    # This function remains unchanged
     if not genai_configured or not genai: return []
     model = genai.GenerativeModel('gemini-1.5-flash')
     prompt = f"""
@@ -112,6 +77,7 @@ def get_ai_suggested_clips(transcript: str, video_duration: int):
 
 
 def get_youtube_id(url):
+    # This function remains unchanged
     if not url: return None
     query = urlparse(url)
     if query.hostname in ('www.youtube.com', 'youtube.com'):
@@ -124,17 +90,13 @@ def get_youtube_id(url):
 def index(request):
     processed_videos = DownloadedVideo.objects.all().order_by('-created_at')
     generated_shorts = GeneratedShort.objects.select_related('parent_video').order_by('-created_at')
-    context = {
-        'videos': processed_videos,
-        'shorts': generated_shorts,
-        'has_gemini_key': genai_configured,
-    }
-    return render(request, 'shorts_app/index.html', context)
+    return render(request, 'shorts_app/index.html', {'videos': processed_videos, 'shorts': generated_shorts})
 
 
 def check_progress(request, task_id):
     return JsonResponse(cache.get(task_id, {"status": "PENDING", "progress": 0, "message": "Initializing..."}))
 
+# Or in views.py (e.g., at the start of process_video)
 logger.info(f"DEBUG: Using S3 bucket: {settings.AWS_STORAGE_BUCKET_NAME}")
 
 def process_video(request):
@@ -181,7 +143,7 @@ def process_video(request):
                         'writeautomaticsub': True,
                         'subtitleslangs': ['en'],
                         'subtitlesformat': 'vtt',
-                        'writethumbnail': True, # Ensure thumbnail is downloaded
+                        'writethumbnail': True,
                         'nocolor': True,
                         'progress_hooks': [progress_hook],
                     }
@@ -189,15 +151,8 @@ def process_video(request):
                         info = ydl.extract_info(video_url, download=True)
 
                     temp_video_path = os.path.join(tmpdir, f'{video_id}.mp4')
-
-                    # YT_DLP often downloads best quality thumbnail as .webp or .jpg/.png
-                    downloaded_thumbnail_path = None
-                    for ext in ['webp', 'jpg', 'jpeg', 'png']:
-                        possible_path = os.path.join(tmpdir, f'{video_id}.{ext}')
-                        if os.path.exists(possible_path):
-                            downloaded_thumbnail_path = possible_path
-                            break
-
+                    temp_thumbnail_path_webp = os.path.join(tmpdir, f'{video_id}.webp')
+                    temp_thumbnail_path_jpg = os.path.join(tmpdir, f'{video_id}.jpg')
                     temp_transcript_path = os.path.join(tmpdir, f'{video_id}.en.vtt')
 
                     if not os.path.exists(temp_video_path):
@@ -205,36 +160,34 @@ def process_video(request):
                         return
 
                     # Upload video to S3
+                    # Removed YoutubeVideoStorage.location as it's no longer defined
                     video_s3_key = f'yt_video/{video_id}.mp4'
                     with open(temp_video_path, 'rb') as f:
-                        # Assuming DownloadedVideo.file_path uses S3 storage
                         DownloadedVideo.file_path.field.storage.save(video_s3_key, File(f))
+                    video_s3_url = DownloadedVideo.file_path.field.storage.url(video_s3_key)
 
-                    # Save thumbnail locally
-                    thumbnail_local_path_for_db = None
-                    if downloaded_thumbnail_path:
-                        thumbnail_filename = f"{video_id}{os.path.splitext(downloaded_thumbnail_path)[1]}"
-                        target_thumbnail_full_path = os.path.join(settings.MEDIA_ROOT, thumbnail_filename)
-
-                        # Ensure the media directory exists
-                        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
-
-                        # Move the downloaded thumbnail to the MEDIA_ROOT
-                        shutil.move(downloaded_thumbnail_path, target_thumbnail_full_path)
-                        # Store the path relative to MEDIA_ROOT (or the full MEDIA_URL path) in the model
-                        thumbnail_local_path_for_db = os.path.join(settings.MEDIA_URL, thumbnail_filename)
-                        logger.info(f"Thumbnail saved locally to: {target_thumbnail_full_path}")
-                    else:
-                        logger.warning(f"No thumbnail found or downloaded for {video_id}.")
-
+                    thumbnail_s3_url = None
+                    thumbnail_s3_key = None
+                    if os.path.exists(temp_thumbnail_path_webp):
+                        # Removed YoutubeVideoStorage.location
+                        thumbnail_s3_key = f'yt_video/{video_id}.webp'
+                        with open(temp_thumbnail_path_webp, 'rb') as f:
+                            DownloadedVideo.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
+                        thumbnail_s3_url = DownloadedVideo.thumbnail_path.field.storage.url(thumbnail_s3_key)
+                    elif os.path.exists(temp_thumbnail_path_jpg):
+                        # Removed YoutubeVideoStorage.location
+                        thumbnail_s3_key = f'yt_video/{video_id}.jpg'
+                        with open(temp_thumbnail_path_jpg, 'rb') as f:
+                            DownloadedVideo.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
+                        thumbnail_s3_url = DownloadedVideo.thumbnail_path.field.storage.url(thumbnail_s3_key)
 
                     video_record, _ = DownloadedVideo.objects.update_or_create(
                         video_id=video_id,
                         defaults={
                             'title': info.get('title', 'N/A'),
                             'duration': info.get('duration', 0),
-                            'file_path': video_s3_key,
-                            'thumbnail_path': thumbnail_local_path_for_db, # Store the local path here
+                            'file_path': video_s3_key, # Store the S3 key, not the full URL
+                            'thumbnail_path': thumbnail_s3_key, # Store the S3 key
                         }
                     )
 
@@ -261,22 +214,15 @@ def process_video(request):
 
 
 def generate_short(request):
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-
-    # Initialize temporary paths to None
-    temp_video_path = None
-    temp_short_path = None
-    temp_thumb_path = None
-
-    try: # This 'try' block now has a corresponding 'except' and 'finally'
+    if request.method != 'POST': return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+    try:
         data = json.loads(request.body)
         video_id, clip_data, aspect_ratio = data.get('video_id'), data.get('clip_data', {}), data.get('aspect_ratio', '9:16')
         start_time_str, end_time_str = clip_data.get('start_time'), clip_data.get('end_time')
         parent_video = get_object_or_404(DownloadedVideo, video_id=video_id)
 
-        # Get the S3 URL for the parent video (file_path is the S3 key)
-        video_s3_key = parent_video.file_path.name
+        # Get the S3 URL for the parent video
+        video_s3_url = parent_video.file_path.url
 
         def time_to_seconds(t):
             parts = [int(x) for x in t.split(':')]
@@ -290,64 +236,70 @@ def generate_short(request):
 
         # Download the video temporarily to local disk for MoviePy processing
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_video_file:
-            s3_client.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, video_s3_key, temp_video_file)
-            temp_video_path = temp_video_file.name
+            try:
+                s3_client.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, parent_video.file_path.name, temp_video_file)
+                temp_video_path = temp_video_file.name
+            except Exception as e:
+                logger.error(f"Error downloading video from S3: {e}", exc_info=True)
+                return JsonResponse({'status': 'error', 'message': f'Could not download video from S3: {e}'}, status=500)
 
-        with VideoFileClip(temp_video_path) as video:
-            subclip = video.subclip(start_s, min(end_s, video.duration))
-            (w, h), final_clip = subclip.size, subclip
+        try:
+            with VideoFileClip(temp_video_path) as video:
+                subclip = video.subclip(start_s, min(end_s, video.duration))
+                (w, h), final_clip = subclip.size, subclip
 
-            if aspect_ratio == '9:16':
-                target_w, target_h = 1080, 1920
-                # Check if resize is needed before applying
-                if w / h < 9 / 16: # If video is wider than 9:16 (e.g., 16:9), resize by height
-                    clip_resized = final_clip.resize(height=target_h)
-                else: # If video is taller or already 9:16, resize by width
-                    clip_resized = final_clip.resize(width=target_w)
+                if aspect_ratio == '9:16':
+                    target_w, target_h = 1080, 1920
+                    # Check if resize is needed before applying
+                    if w / h < 9 / 16: # If video is wider than 9:16 (e.g., 16:9), resize by height
+                        clip_resized = final_clip.resize(height=target_h)
+                    else: # If video is taller or already 9:16, resize by width
+                        clip_resized = final_clip.resize(width=target_w)
 
-                # Ensure the clip is cropped to the target aspect ratio if it's still not 9:16
-                if round(clip_resized.w / clip_resized.h, 2) != round(9 / 16, 2): # Use rounding for float comparison
-                    clip_resized = crop(clip_resized, width=target_w, height=target_h, x_center=clip_resized.w / 2, y_center=clip_resized.h / 2)
+                    # Ensure the clip is cropped to the target aspect ratio if it's still not 9:16
+                    # after initial resize (e.g. source is 4:3, resized to 1080px width, height will be too short)
+                    if clip_resized.w / clip_resized.h != 9 / 16:
+                        clip_resized = crop(clip_resized, width=target_w, height=target_h, x_center=clip_resized.w / 2, y_center=clip_resized.h / 2)
 
-                background = ColorClip(size=(target_w, target_h), color=(0, 0, 0))
-                final_clip = CompositeVideoClip([background.set_opacity(1), clip_resized.set_position("center")], use_bgclip=True)
-            elif aspect_ratio == '16:9':
-                # If the source is not 16:9, crop or pad
-                if w / h > 16 / 9: # Wider than 16:9, crop width
-                    final_clip = crop(subclip, width=subclip.h * 16 / 9, height=subclip.h, x_center=subclip.w / 2)
-                elif w / h < 16 / 9: # Taller than 16:9, crop height
-                    final_clip = crop(subclip, width=subclip.w, height=subclip.w * 9 / 16, y_center=subclip.h / 2)
-            # For 'original', no aspect ratio change is needed beyond subclip.
+                    background = ColorClip(size=(target_w, target_h), color=(0, 0, 0))
+                    final_clip = CompositeVideoClip([background.set_opacity(1), clip_resized.set_position("center")], use_bgclip=True)
+                elif aspect_ratio == '16:9':
+                    # If the source is not 16:9, crop or pad
+                    if w / h > 16 / 9: # Wider than 16:9, crop width
+                        final_clip = crop(subclip, width=subclip.h * 16 / 9, height=subclip.h, x_center=subclip.w / 2)
+                    elif w / h < 16 / 9: # Taller than 16:9, crop height
+                        final_clip = crop(subclip, width=subclip.w, height=subclip.w * 9 / 16, y_center=subclip.h / 2)
+                # For 'original', no aspect ratio change is needed beyond subclip.
 
-            short_uuid = uuid.uuid4()
-            # Use temporary files for saving before uploading to S3
-            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_short_file, \
-                 tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_thumb_file:
+                short_uuid = uuid.uuid4()
+                # Use temporary files for saving before uploading to S3
+                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_short_file, \
+                     tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_thumb_file:
 
-                temp_short_path = temp_short_file.name
-                temp_thumb_path = temp_thumb_file.name
+                    temp_short_path = temp_short_file.name
+                    temp_thumb_path = temp_thumb_file.name
 
-                final_clip.write_videofile(temp_short_path, codec="libx264", audio_codec="aac", threads=os.cpu_count(), preset="medium")
-                final_clip.save_frame(temp_thumb_path, t=final_clip.duration / 2)
+                    final_clip.write_videofile(temp_short_path, codec="libx264", audio_codec="aac", threads=os.cpu_count(), preset="medium")
+                    final_clip.save_frame(temp_thumb_path, t=final_clip.duration / 2)
 
-                # Upload short video to S3
-                short_s3_key = f'shorts/{short_uuid}.mp4'
-                with open(temp_short_path, 'rb') as f:
-                    GeneratedShort.short_path.field.storage.save(short_s3_key, File(f))
+                    # Upload short and thumbnail to S3
+                    short_s3_key = f'shorts/{short_uuid}.mp4'
+                    thumbnail_s3_key = f'shorts/{short_uuid}.png'
 
-                # Save short thumbnail locally
-                short_thumbnail_local_path_for_db = None
-                if os.path.exists(temp_thumb_path):
-                    short_thumbnail_filename = f"{short_uuid}.png"
-                    target_short_thumbnail_full_path = os.path.join(settings.MEDIA_ROOT, short_thumbnail_filename)
+                    with open(temp_short_path, 'rb') as f:
+                        GeneratedShort.short_path.field.storage.save(short_s3_key, File(f))
 
-                    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
-                    shutil.move(temp_thumb_path, target_short_thumbnail_full_path)
-                    short_thumbnail_local_path_for_db = os.path.join(settings.MEDIA_URL, short_thumbnail_filename)
-                    logger.info(f"Short thumbnail saved locally to: {target_short_thumbnail_full_path}")
-                else:
-                    logger.warning(f"No thumbnail generated for short {short_uuid}.")
+                    with open(temp_thumb_path, 'rb') as f:
+                        GeneratedShort.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
 
+        finally:
+                        # Clean up temporary downloaded video and generated files
+                        if 'temp_video_path' in locals() and os.path.exists(temp_video_path):
+                            os.unlink(temp_video_path)
+                        if 'temp_short_path' in locals() and os.path.exists(temp_short_path):
+                            os.unlink(temp_short_path)
+                        if 'temp_thumb_path' in locals() and os.path.exists(temp_thumb_path):
+                            os.unlink(temp_thumb_path)
 
         GeneratedShort.objects.create(
             parent_video=parent_video,
@@ -355,45 +307,43 @@ def generate_short(request):
             description=clip_data.get('description', ''),
             tags=clip_data.get('tags', []),
             short_path=short_s3_key, # Store S3 key
-            thumbnail_path=short_thumbnail_local_path_for_db, # Store local path for short thumbnail
+            thumbnail_path=thumbnail_s3_key, # Store S3 key
+            start_time=start_time_str,
+            end_time=end_time_str
         )
         return JsonResponse({'status': 'success', 'message': 'Short created successfully!'})
     except Exception as e:
         logger.error(f"Error during short generation: {e}", exc_info=True)
         return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {e}'}, status=500)
-    finally:
-        # Clean up temporary downloaded video and generated files
-        if temp_video_path and os.path.exists(temp_video_path):
-            os.unlink(temp_video_path)
-        if temp_short_path and os.path.exists(temp_short_path):
-            os.unlink(temp_short_path)
-        if temp_thumb_path and os.path.exists(temp_thumb_path):
-            os.unlink(temp_thumb_path)
 
 
-# --- Deletion and Download views ---
+# --- Deletion and Download views (Updated for S3) ---
+def _delete_files_s3(s3_keys):
+    if not s3_client:
+        logger.error("S3 client not initialized. Cannot delete files from S3.")
+        return
+
+    for key in s3_keys:
+        if not key: continue # Skip if key is None or empty
+        try:
+            s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+            logger.info(f"Deleted S3 object: {key}")
+        except Exception as e:
+            logger.error(f"Failed to delete S3 object {key}: {e}")
+
+
 def delete_video(request, video_id):
     if request.method == 'POST':
         video = get_object_or_404(DownloadedVideo, video_id=video_id)
         # Collect all S3 keys to delete
-        s3_keys_to_delete = [video.file_path.name] # .name gives the S3 key/path
-
-        local_files_to_delete = []
+        keys_to_delete = [video.file_path.name] # .name gives the S3 key/path
         if video.thumbnail_path:
-            local_files_to_delete.append(video.thumbnail_path.url) # Store full URL to resolve path
-
-        _delete_files_s3(s3_keys_to_delete)
-        _delete_files_local(local_files_to_delete) # Delete local thumbnail
-
-        # Delete associated shorts and their S3 files and local thumbnails
-        for short in video.shorts.all():
-            s3_keys_to_delete.append(short.short_path.name)
-            if short.thumbnail_path:
-                local_files_to_delete.append(short.thumbnail_path.url)
-
-        _delete_files_s3(s3_keys_to_delete) # Call again to include shorts' S3 files
-        _delete_files_local(local_files_to_delete) # Call again to include shorts' local thumbnails
-
+            keys_to_delete.append(video.thumbnail_path.name)
+        # Add transcript path if it exists (assuming it's named consistently with video_id in S3)
+        # Note: YouTubeDL doesn't upload VTT directly to S3 with its default hook.
+        # If you were uploading VTTs, you'd need to add that logic here.
+        # For now, we'll assume VTT is not uploaded to S3 or is handled separately.
+        _delete_files_s3(keys_to_delete)
         video.delete()
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
@@ -402,20 +352,13 @@ def delete_video(request, video_id):
 def delete_short(request, short_id):
     if request.method == 'POST':
         short = get_object_or_404(GeneratedShort, id=short_id)
-        s3_keys_to_delete = [short.short_path.name]
-        local_files_to_delete = []
-
-        if short.thumbnail_path:
-            local_files_to_delete.append(short.thumbnail_path.url)
-
-        _delete_files_s3(s3_keys_to_delete)
-        _delete_files_local(local_files_to_delete)
+        _delete_files_s3([short.short_path.name, short.thumbnail_path.name])
         short.delete()
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 
-def download_short(request, short_id):
+def download_short(request, short_id): 
     if not s3_client:
         raise Http404("S3 client not configured.")
 
@@ -429,10 +372,11 @@ def download_short(request, short_id):
             Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': s3_key},
             ExpiresIn=3600 # URL 1 ghante ke liye valid
         )
-
-        return HttpResponseRedirect(url)
+        
+        return HttpResponseRedirect(url) 
     except ClientError as e:
         logger.error(f"Error generating pre-signed URL for {s3_key}: {e}")
+        # Agar koi error aaye to 404 dikha sakte hain ya proper error message
         raise Http404("File not found or access denied.")
     except Exception as e:
         logger.error(f"Unexpected error in download_short: {e}")
