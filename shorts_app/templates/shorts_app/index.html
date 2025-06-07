@@ -9,13 +9,80 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #007bff; --primary-hover: #0056b3;
-            --secondary-color: #6c757d; --danger-color: #dc3545;
-            --light-gray: #f8f9fa; --medium-gray: #e9ecef; --dark-gray: #343a40;
-            --text-color: #212529; --border-radius: 12px; --box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            --primary-color:rgb(56, 116, 246);
+            --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --primary-hover: #2575fc;
+            --secondary-color: #495057;
+            --danger-color: #e63946;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #343a40;
+            --text-color: #212529;
+            --background-color: #f0f2f5;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            --transition-speed: 0.3s;
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: var(--text-color); margin: 0; padding: 1rem 2rem; line-height: 1.6; }
-        .container { max-width: 1200px; margin: auto; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem 0;
+        }
+        .header__logo {
+            width: 60px;
+            height: 60px;
+            margin-right: 1rem;
+        }
+        .header__title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin: 0;
+        }
+        .header__title span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            border-bottom: 2px solid var(--medium-gray);
+            padding-bottom: 10px;
+            margin-bottom: 1.5rem;
+            color: var(--dark-gray);
+        }
+        .card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 2.5rem;
+            transition: all var(--transition-speed) ease;
+        }
+        .card:hover {
+             transform: translateY(-5px);
+             box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        /* Existing h2 style, kept for other subheadings */
         h2 { border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; font-weight: 700; margin-bottom: 1.5rem; }
         .card { background: #fff; padding: 1.5rem 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 2.5rem; }
 
@@ -47,7 +114,7 @@
 
         .video-card { width: 320px; background-color: var(--light-gray); }
         /* Image src for S3 will be a full URL, no need for /media/ prefix in HTML.
-           Django's FileField.url property will provide the complete S3 URL. */
+            Django's FileField.url property will provide the complete S3 URL. */
         .video-card__thumb { width: 100%; height: 180px; object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; }
         .video-card__info { padding: 1rem; flex-grow: 1; }
         .video-card__actions { padding: 0 1rem 1rem 1rem; display: flex; gap: 0.5rem; }
@@ -75,6 +142,21 @@
 </head>
 <body>
     <div class="container">
+       <header class="header">
+            <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: #6a11cb;"/>
+                        <stop offset="100%" style="stop-color: #2575fc;"/>
+                    </linearGradient>
+                </defs>
+                <path fill="url(#logoGradient)" d="M85.3,17.6c-4.6-4.6-10.8-7.1-17.3-7.1H32c-6.5,0-12.7,2.5-17.3,7.1C10.1,22.2,7.6,28.4,7.6,35v30
+                    c0,6.5,2.5,12.7,7.1,17.3s10.8,7.1,17.3,7.1h36c6.5,0,12.7-2.5,17.3-7.1s7.1-10.8,7.1-17.3V35C92.4,28.4,89.9,22.2,85.3,17.6z
+                     M65,52.5l-20,12.5c-1.7,1.1-3.9-0.3-3.9-2.5V37.5c0-2.2,2.1-3.6,3.9-2.5l20,12.5C66.7,48.6,66.7,51.4,65,52.5z"/>
+            </svg>
+            <h1 class="header__title"><span>ClipCraft</span> AI</h1>
+        </header>
+
         <div class="card">
             <h2>1. Process a Video</h2>
             <form id="video-form" class="process-form">
@@ -325,17 +407,83 @@
             });
             const result = await response.json();
             if (result.status === 'success') {
-                alert('Short created successfully! The page will now reload.');
+                // Using a custom modal/message box instead of alert()
+                showMessageBox('Short created successfully! The page will now reload.');
                 window.location.reload();
             } else { throw new Error(result.message); }
         } catch (error) {
-            alert(`Error creating short: ${error.message || 'An unexpected error occurred.'}`);
+            showMessageBox(`Error creating short: ${error.message || 'An unexpected error occurred.'}`);
         } finally { // Ensure UI is reset in all cases
             toggleButtonLoading(button, false);
             document.querySelectorAll('.generate-btn, .fallback-generate-btn, .manual-generate-btn').forEach(b => b.disabled = false);
             showProgress('generation', false);
         }
     }
+
+    // Custom message box function to replace alert() and confirm()
+    function showMessageBox(message, type = 'alert', callback = null) {
+        // Create overlay and message box elements
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        `;
+
+        const messageBox = document.createElement('div');
+        messageBox.style.cssText = `
+            background-color: white; padding: 25px; border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); max-width: 400px;
+            text-align: center; font-family: 'Inter', sans-serif;
+            font-size: 1.1rem; color: var(--text-color);
+        `;
+
+        const messageText = document.createElement('p');
+        messageText.textContent = message;
+        messageText.style.marginBottom = '20px';
+
+        const buttonContainer = document.createElement('div');
+
+        if (type === 'alert') {
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.classList.add('btn', 'btn-primary');
+            okButton.style.padding = '10px 20px';
+            okButton.onclick = () => {
+                document.body.removeChild(overlay);
+                if (callback) callback(true);
+            };
+            buttonContainer.appendChild(okButton);
+        } else if (type === 'confirm') {
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = 'Yes';
+            confirmButton.classList.add('btn', 'btn-danger');
+            confirmButton.style.marginRight = '10px';
+            confirmButton.style.padding = '10px 20px';
+            confirmButton.onclick = () => {
+                document.body.removeChild(overlay);
+                if (callback) callback(true);
+            };
+
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'No';
+            cancelButton.classList.add('btn', 'btn-secondary');
+            cancelButton.style.padding = '10px 20px';
+            cancelButton.onclick = () => {
+                document.body.removeChild(overlay);
+                if (callback) callback(false);
+            };
+
+            buttonContainer.appendChild(confirmButton);
+            buttonContainer.appendChild(cancelButton);
+        }
+
+        messageBox.appendChild(messageText);
+        messageBox.appendChild(buttonContainer);
+        overlay.appendChild(messageBox);
+        document.body.appendChild(overlay);
+    }
+
 
     // --- Main Event Listeners for STATIC buttons ---
     document.getElementById('video-form').addEventListener('submit', (e) => {
@@ -394,23 +542,27 @@
         const type = button.dataset.type;
         const id = button.dataset.id;
         const url = type === 'video' ? `/delete_video/${id}/` : `/delete_short/${id}/`;
-        if (confirm(`Are you sure you want to permanently delete this ${type}?`)) {
-            toggleButtonLoading(button, true);
-            try {
-                const response = await fetch(url, { method: 'POST', headers: {'X-CSRFToken': csrfToken }});
-                if (response.ok) {
-                    const cardId = type === 'video' ? `video-card-${id}` : `short-card-${id}`;
-                    document.getElementById(cardId)?.remove();
-                } else {
-                    const data = await response.json();
-                    alert(`Error: ${data.message || 'Could not delete item.'}`);
+        
+        // Using custom confirm box instead of browser's confirm()
+        showMessageBox(`Are you sure you want to permanently delete this ${type}?`, 'confirm', async (result) => {
+            if (result) {
+                toggleButtonLoading(button, true);
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: {'X-CSRFToken': csrfToken }});
+                    if (response.ok) {
+                        const cardId = type === 'video' ? `video-card-${id}` : `short-card-${id}`;
+                        document.getElementById(cardId)?.remove();
+                    } else {
+                        const data = await response.json();
+                        showMessageBox(`Error: ${data.message || 'Could not delete item.'}`);
+                    }
+                } catch (err) {
+                    showMessageBox('An error occurred during deletion.');
+                } finally {
+                    toggleButtonLoading(button, false);
                 }
-            } catch (err) {
-                alert('An error occurred during deletion.');
-            } finally {
-                toggleButtonLoading(button, false);
             }
-        }
+        });
     }
 </script>
 </body>
