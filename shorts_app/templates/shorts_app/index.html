@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
+:root {
             --primary-color:rgb(56, 116, 246);
             --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             --primary-hover: #2575fc;
@@ -39,10 +39,14 @@
         .header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
+            justify-content: space-between; /* Changed to space-between for tabs */
             margin-bottom: 2rem;
             padding: 1.5rem 0;
+            border-bottom: 1px solid var(--medium-gray); /* Added border-bottom for header */
+        }
+        .header__left {
+            display: flex;
+            align-items: center;
         }
         .header__logo {
             width: 60px;
@@ -77,10 +81,95 @@
             box-shadow: var(--box-shadow);
             margin-bottom: 2.5rem;
             transition: all var(--transition-speed) ease;
+        
         }
         .card:hover {
              transform: translateY(-5px);
              box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        /* Nav Tabs & Creative Button */
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            align-items: center; /* Align items vertically */
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            border: none; /* Removed border */
+            background-color: transparent; /* Changed to transparent */
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 600;
+            transition: all 0.2s ease;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .nav-tab.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .nav-tab:hover:not(.active) {
+            background-color: var(--medium-gray);
+            color: var(--dark-gray);
+        }
+
+        .nav-tab-creative {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px; /* Pill shape */
+            background: linear-gradient(45deg, #FF6B6B, #FFCD3C); /* Warm, vibrant gradient */
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 15px rgba(255, 107, 107, 0.4);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            white-space: nowrap;
+        }
+
+        .nav-tab-creative:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 20px rgba(255, 107, 107, 0.6);
+            color: white; /* Ensure text color stays white */
+        }
+
+        .nav-tab-creative::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #FFCD3C, #FF6B6B); /* Invert gradient on hover */
+            z-index: -1;
+            transition: transform 0.4s ease-in-out;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+
+        .nav-tab-creative:hover::before {
+            transform: scaleX(1);
+            transform-origin: right;
+        }
+
+        /* SVG for creative button */
+        .nav-tab-creative svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor; /* Inherit color from text */
+            transition: transform 0.3s ease;
+        }
+        .nav-tab-creative:hover svg {
+            transform: rotate(10deg);
         }
         /* Existing h2 style, kept for other subheadings */
         h2 { border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; font-weight: 700; margin-bottom: 1.5rem; }
@@ -142,19 +231,30 @@
 </head>
 <body>
     <div class="container">
-       <header class="header">
-            <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color: #6a11cb;"/>
-                        <stop offset="100%" style="stop-color: #2575fc;"/>
-                    </linearGradient>
-                </defs>
-                <path fill="url(#logoGradient)" d="M85.3,17.6c-4.6-4.6-10.8-7.1-17.3-7.1H32c-6.5,0-12.7,2.5-17.3,7.1C10.1,22.2,7.6,28.4,7.6,35v30
+        <header class="header">
+            <div class="header__left">
+                <svg class="header__logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: #6a11cb;"/>
+                            <stop offset="100%" style="stop-color: #2575fc;"/>
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#logoGradient)" d="M85.3,17.6c-4.6-4.6-10.8-7.1-17.3-7.1H32c-6.5,0-12.7,2.5-17.3,7.1C10.1,22.2,7.6,28.4,7.6,35v30
                     c0,6.5,2.5,12.7,7.1,17.3s10.8,7.1,17.3,7.1h36c6.5,0,12.7-2.5,17.3-7.1s7.1-10.8,7.1-17.3V35C92.4,28.4,89.9,22.2,85.3,17.6z
                      M65,52.5l-20,12.5c-1.7,1.1-3.9-0.3-3.9-2.5V37.5c0-2.2,2.1-3.6,3.9-2.5l20,12.5C66.7,48.6,66.7,51.4,65,52.5z"/>
             </svg>
             <h1 class="header__title"><span>ClipCraft</span> AI</h1>
+            </div>
+            <div class="nav-tabs">
+                <a href="{% url 'videocraft_app:index' %}" class="nav-tab-creative">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.25 10.75C18.25 10.3478 17.9109 10.0087 17.5087 10.0087C17.1065 10.0087 16.7674 10.3478 16.7674 10.75C16.7674 11.1522 17.1065 11.4913 17.5087 11.4913C17.9109 11.4913 18.25 11.1522 18.25 10.75Z" fill="currentColor"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM10.5 8C10.5 7.44772 10.9477 7 11.5 7H14.5C15.0523 7 15.5 7.44772 15.5 8V11C15.5 11.5523 15.0523 12 14.5 12H12.5V14.5C12.5 15.0523 12.0523 15.5 11.5 15.5C10.9477 15.5 10.5 15.0523 10.5 14.5V8Z" fill="currentColor"/>
+                    </svg>
+                    VideoCraft AI
+                </a>
+            </div>
         </header>
 
         <div class="card">

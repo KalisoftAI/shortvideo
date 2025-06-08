@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shorts_app',
-    'storages', # Add django-storages here
+    'storages',
+    'videocraft_app', # Add your new app here
+    'celery',
 ]
 
 MIDDLEWARE = [
@@ -191,3 +193,29 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # API Key for Google Gemini
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+# Celery Configuration
+# This is the URL for your message broker (e.g., Redis).
+# You need to have Redis installed and running on your system for this to work.
+CELERY_BROKER_URL = 'redis://localhost:6379/1' # Using database 1 for Celery
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/1' # Using database 1 for Celery results
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata' # Set your desired timezone
+
+# Ensure this is set for media files handling if you don't use S3 for videocraft_app
+# If using S3 for videocraft_app as well, ensure the custom storage classes are defined there.
+# For simplicity, we'll assume local MEDIA_ROOT will work for videocraft_app uploads initially.
+# If you want S3 for videocraft_app, you'll need to update models and potentially add custom storage classes
+# similar to what you have in shorts_app/models.py for videocraft_app.
+
+
+# Celery Beat settings (for scheduled tasks)
+CELERY_BEAT_SCHEDULE = {
+    # 'add-every-30-seconds': {
+    #     'task': 'videocraft_app.tasks.some_scheduled_task', # Example task
+    #     'schedule': 30.0,
+    #     'args': (16, 16)
+    # },
+}
