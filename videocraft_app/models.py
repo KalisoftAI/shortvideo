@@ -12,7 +12,12 @@ class VideoCraftImageStorage(S3Boto3Storage):
 class VideoCraftVideoStorage(S3Boto3Storage):
     location = 'videocraft_videos' # This defines the folder in S3
     file_overwrite = False
-    default_acl = 'public-read' # Ensure generated videos are publicly readable
+    # Removed default_acl = 'public-read' - permissions handled by bucket policy
+
+class VideoCraftAudioStorage(S3Boto3Storage):
+    location = 'videocraft_audio' # New storage for audio files
+    file_overwrite = False
+    # Removed default_acl = 'public-read' - permissions handled by bucket policy
 
 class VideoCraftProject(models.Model):
     """
@@ -52,8 +57,11 @@ class GeneratedVideo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.OneToOneField(VideoCraftProject, on_delete=models.CASCADE, related_name='generated_video')
     video_file = models.FileField(storage=VideoCraftVideoStorage())
-    audio_file_url = models.URLField(max_length=500, blank=True, null=True) # URL to external audio or S3 audio
+    # New field to store uploaded audio file, if any
+    audio_file = models.FileField(storage=VideoCraftAudioStorage(), blank=True, null=True) 
+    audio_file_url = models.URLField(max_length=500, blank=True, null=True) # URL to external audio or S3 audio (if not uploaded locally)
     status = models.CharField(max_length=20, default='pending') # e.g., 'pending', 'processing', 'completed', 'failed'
+    status_message = models.TextField(blank=True, null=True) # More detailed status/error message
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

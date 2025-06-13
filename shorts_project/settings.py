@@ -31,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-!7#(gj$j&nzn-*8$s#8w&$(z@&2t5r(lnk)ek=)vkj!)#o7z-q')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING: don't run with debug turned on in production!'
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'shorts_app',
     'storages',
     'videocraft_app', # Add your new app here
-    'celery',
+    # 'celery', # Removed Celery
 ]
 
 MIDDLEWARE = [
@@ -95,6 +95,11 @@ LOGGING = {
             "level": "DEBUG", # Set to DEBUG to see all log levels (DEBUG, INFO, WARNING, ERROR)
             "propagate": True,
         },
+        "videocraft_app": { # Logger for your videocraft_app
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 ROOT_URLCONF = 'shorts_project.urls'
@@ -102,7 +107,7 @@ ROOT_URLCONF = 'shorts_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'videocraft_app' / 'templates' / 'videocraft_app'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -149,7 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+# https://docs.djangoproject.com/en/4.2/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -184,7 +189,8 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None # Or 'public-read' if you want publicly readable files
+# Changed AWS_DEFAULT_ACL to None because bucket does not allow ACLs (Bucket Owner Enforced)
+AWS_DEFAULT_ACL = None # IMPORTANT: Set to None when "Bucket Owner Enforced" is enabled on S3 bucket
 
 # Define custom storage for different folders, inheriting directly from S3Boto3Storage
 # This line should now correctly use the resolved AWS_STORAGE_BUCKET_NAME
@@ -194,28 +200,5 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # API Key for Google Gemini
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-# Celery Configuration
-# This is the URL for your message broker (e.g., Redis).
-# You need to have Redis installed and running on your system for this to work.
-CELERY_BROKER_URL = 'redis://localhost:6379/1' # Using database 1 for Celery
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1' # Using database 1 for Celery results
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Kolkata' # Set your desired timezone
 
-# Ensure this is set for media files handling if you don't use S3 for videocraft_app
-# If using S3 for videocraft_app as well, ensure the custom storage classes are defined there.
-# For simplicity, we'll assume local MEDIA_ROOT will work for videocraft_app uploads initially.
-# If you want S3 for videocraft_app, you'll need to update models and potentially add custom storage classes
-# similar to what you have in shorts_app/models.py for videocraft_app.
-
-
-# Celery Beat settings (for scheduled tasks)
-CELERY_BEAT_SCHEDULE = {
-    # 'add-every-30-seconds': {
-    #     'task': 'videocraft_app.tasks.some_scheduled_task', # Example task
-    #     'schedule': 30.0,
-    #     'args': (16, 16)
-    # },
-}
+ENABLE_TEXT_OVERLAYS = True

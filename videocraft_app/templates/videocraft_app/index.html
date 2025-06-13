@@ -143,6 +143,7 @@
             display: flex;
             gap: 0.75rem;
             margin-top: 1rem;
+            flex-wrap: wrap; /* Allow buttons to wrap */
         }
         .project-card__actions .btn {
             padding: 10px 18px;
@@ -215,6 +216,13 @@
                     <p>Last Updated: {{ project.updated_at|date:"M d, Y H:i" }}</p>
                     <div class="project-card__actions">
                         <a href="{% url 'videocraft_app:project_detail' project.id %}" class="btn btn-primary">Open</a>
+                        {% if project.generated_video and project.generated_video.status == 'completed' %}
+                            <a href="{{ project.generated_video.video_file.url }}" download="{{ project.title|slugify }}.mp4" class="btn btn-secondary">Download Video</a>
+                        {% elif project.generated_video and project.generated_video.status == 'processing' %}
+                            <button type="button" class="btn btn-secondary" disabled>Video Processing...</button>
+                        {% elif project.generated_video and project.generated_video.status == 'failed' %}
+                             <button type="button" class="btn btn-danger" disabled>Video Failed</button>
+                        {% endif %}
                         <button type="button" class="btn btn-danger delete-project-btn" data-project-id="{{ project.id }}">Delete</button>
                     </div>
                 </div>

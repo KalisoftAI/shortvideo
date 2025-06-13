@@ -166,7 +166,8 @@
             display: block;
         }
         .image-card__content textarea,
-        .image-card__content input[type="number"] {
+        .image-card__content input[type="number"],
+        .image-card__content input[type="text"] { /* Added text input for font-family */
             width: 100%;
             padding: 8px;
             border: 1px solid var(--medium-gray);
@@ -179,6 +180,7 @@
             gap: 0.5rem;
             padding: 0 1rem 1rem;
             justify-content: center; /* Center buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap */
         }
         .image-card__actions .btn {
             padding: 8px 14px;
@@ -241,7 +243,6 @@
         }
         .btn.loading .spinner { display: block; }
         .btn.loading .btn-text { display: none; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         /* Style for text inside spinner for generate text overlay */
         .btn.loading span.spinner-border {
             border-top-color: var(--primary-color);
@@ -297,6 +298,31 @@
         }
         .back-link:hover {
             color: var(--primary-hover);
+        }
+
+        /* Styles for radio buttons */
+        .audio-input-options {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .audio-input-options label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+        .audio-input-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            background-color: var(--light-gray);
+        }
+        .audio-input-container:empty {
+            display: none; /* Hide if no content */
         }
     </style>
 </head>
@@ -371,41 +397,66 @@
 
         <div class="card">
             <h2>Generate Video</h2>
-            <div class="form-group">
-                <label for="audio-url">Background Audio URL (Optional):</label>
-                <input type="text" id="audio-url" class="form-control" placeholder="e.g., https://example.com/audio.mp3">
-            </div>
-            <div class="form-group">
-                <label for="transition-type">Transition Effect:</label>
-                <select id="transition-type" class="form-control">
-                    <option value="fade">Fade</option>
-                    <option value="none">None</option>
-                    <!-- Add more transition options later, e.g., 'slide', 'wipe' -->
-                </select>
-            </div>
-             <div class="form-group">
-                <label for="text-color">Text Color:</label>
-                <input type="color" id="text-color" class="form-control" value="#ffffff">
-            </div>
-            <div class="form-group">
-                <label for="font-size">Font Size:</label>
-                <input type="number" id="font-size" class="form-control" value="50" min="10" max="100">
-            </div>
-            <div class="form-group">
-                <label for="font-family">Font Family:</label>
-                <input type="text" id="font-family" class="form-control" value="sans" placeholder="e.g., Arial, sans, serif">
-            </div>
-            <button type="button" id="generate-video-btn" class="btn btn-primary">
-                <span class="btn-text">Generate Video</span>
-                <div class="spinner"></div>
-            </button>
+            <form id="generate-video-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Choose Audio Source:</label>
+                    <div class="audio-input-options">
+                        <label>
+                            <input type="radio" name="audio_source" value="none" checked> None
+                        </label>
+                        <label>
+                            <input type="radio" name="audio_source" value="local_file"> Upload Local File
+                        </label>
+                        <label>
+                            <input type="radio" name="audio_source" value="external_url"> External URL
+                        </label>
+                    </div>
+                </div>
+
+                <div id="local-audio-upload-container" class="form-group audio-input-container" style="display: none;">
+                    <label for="local-audio-file">Upload Audio File:</label>
+                    <input type="file" id="local-audio-file" name="audio_file" accept="audio/*" class="form-control">
+                </div>
+
+                <div id="external-audio-url-container" class="form-group audio-input-container" style="display: none;">
+                    <label for="audio-url">Background Audio URL:</label>
+                    <input type="text" id="audio-url" class="form-control" placeholder="e.g., https://example.com/audio.mp3">
+                </div>
+
+                <div class="form-group">
+                    <label for="transition-type">Transition Effect:</label>
+                    <select id="transition-type" name="transition_type" class="form-control">
+                        <option value="fade">Fade</option>
+                        <option value="none">None</option>
+                        <option value="wipe_right">Wipe Right</option>
+                        <option value="slide_left">Slide Left</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="text-color">Text Color:</label>
+                    <input type="color" id="text-color" name="text_color" class="form-control" value="#ffffff">
+                </div>
+                <div class="form-group">
+                    <label for="font-size">Font Size:</label>
+                    <input type="number" id="font-size" name="font_size" class="form-control" value="50" min="10" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="font-family">Font Family:</label>
+                    <input type="text" id="font-family" name="font" class="form-control" value="sans" placeholder="e.g., Arial, sans, serif">
+                </div>
+                <button type="submit" id="generate-video-btn" class="btn btn-primary">
+                    <span class="btn-text">Generate Video</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
             <div id="generation-progress" class="progress-indicator">
                 <p id="generation-progress-text" class="progress-text"></p>
                 <div class="progress-bar-bg"><div id="generation-progress-bar" class="progress-bar-fill"></div></div>
             </div>
         </div>
 
-        {% if generated_video %}
+        {% if generated_video and generated_video.video_file %} {# Added check for video_file existence #}
         <div class="card video-player-card">
             <h2>Preview Generated Video</h2>
             <video controls autoplay muted>
@@ -533,8 +584,9 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.status === 'success') {
-                    showMessageBox('Images uploaded successfully! Reloading page to show new images.');
-                    window.location.reload(); // Reload to show new images
+                    showMessageBox('Images uploaded successfully! Reloading page to show new images.', 'alert', () => {
+                        window.location.reload(); // Reload to show new images
+                    });
                 } else {
                     showMessageBox(data.message || 'Failed to upload images.');
                 }
@@ -611,34 +663,113 @@
             }
         });
 
+        // Audio source selection logic
+        const audioSourceRadios = document.querySelectorAll('input[name="audio_source"]');
+        const localAudioContainer = document.getElementById('local-audio-upload-container');
+        const externalAudioContainer = document.getElementById('external-audio-url-container');
+
+        function handleAudioSourceChange() {
+            const selectedSource = document.querySelector('input[name="audio_source"]:checked').value;
+            if (selectedSource === 'local_file') {
+                localAudioContainer.style.display = 'block';
+                externalAudioContainer.style.display = 'none';
+                document.getElementById('audio-url').value = ''; // Clear external URL
+            } else if (selectedSource === 'external_url') {
+                localAudioContainer.style.display = 'none';
+                externalAudioContainer.style.display = 'block';
+                document.getElementById('local-audio-file').value = ''; // Clear local file input
+            } else { // 'none'
+                localAudioContainer.style.display = 'none';
+                externalAudioContainer.style.display = 'none';
+                document.getElementById('local-audio-file').value = '';
+                document.getElementById('audio-url').value = '';
+            }
+        }
+
+        audioSourceRadios.forEach(radio => {
+            radio.addEventListener('change', handleAudioSourceChange);
+        });
+
+        // Initial call to set correct display based on default checked radio
+        handleAudioSourceChange();
+
+
         // Generate Video
-        document.getElementById('generate-video-btn').addEventListener('click', async () => {
+        document.getElementById('generate-video-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
             const button = document.getElementById('generate-video-btn');
             toggleButtonLoading(button, true);
             showProgress('generation', true, 'Initializing video generation...', -1); // Indeterminate progress
 
-            const audioUrl = document.getElementById('audio-url').value;
+            const audioSource = document.querySelector('input[name="audio_source"]:checked').value;
+            let audioFile = null;
+            let audioUrl = null;
+
+            if (audioSource === 'local_file') {
+                audioFile = document.getElementById('local-audio-file').files[0];
+                if (!audioFile) {
+                    showMessageBox('Please select an audio file to upload or choose another option.');
+                    toggleButtonLoading(button, false);
+                    showProgress('generation', false);
+                    return;
+                }
+            } else if (audioSource === 'external_url') {
+                audioUrl = document.getElementById('audio-url').value.trim();
+                if (!audioUrl) {
+                    showMessageBox('Please enter an external audio URL or choose another option.');
+                    toggleButtonLoading(button, false);
+                    showProgress('generation', false);
+                    return;
+                }
+            }
+
             const transitionType = document.getElementById('transition-type').value;
             const textColor = document.getElementById('text-color').value;
             const fontSize = document.getElementById('font-size').value;
             const font = document.getElementById('font-family').value;
 
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            if (audioFile) {
+                formData.append('audio_file', audioFile);
+            }
+            formData.append('transition_type', transitionType);
+            formData.append('text_color', textColor);
+            formData.append('font_size', fontSize);
+            formData.append('font', font);
+            // Only add audio_url if it's external and no local file is being uploaded
+            if (audioSource === 'external_url' && audioUrl) {
+                 formData.append('audio_url', audioUrl);
+            }
+            // For parameters that are not files, it's often cleaner to send them as JSON
+            // but for simplicity with file uploads, FormData is being used for everything here.
+            // If audio_file is not present, we will send other parameters as JSON in the body.
+            let requestBody = {};
+            let headers = { 'X-CSRFToken': csrfToken };
+
+            if (!audioFile) { // If no local audio file, send as JSON
+                requestBody = {
+                    audio_url: audioUrl, // This will be null if audioSource is 'none'
+                    transition_type: transitionType,
+                    text_color: textColor,
+                    font_size: fontSize,
+                    font: font
+                };
+                headers['Content-Type'] = 'application/json';
+            }
+            
             try {
                 const response = await fetch("{% url 'videocraft_app:generate_video' project.id %}", {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({
-                        audio_url: audioUrl,
-                        transition_type: transitionType,
-                        text_color: textColor,
-                        font_size: fontSize,
-                        font: font
-                    })
+                    headers: headers,
+                    body: audioFile ? formData : JSON.stringify(requestBody)
                 });
                 const data = await response.json();
 
-                if (data.status === 'processing' && data.task_id) {
-                    generationProgressInterval = setInterval(() => checkGenerationProgress(data.task_id), 3000); // Poll every 3 seconds
+                if (data.status === 'processing' && data.project_id) {
+                    // Start polling for progress using the project_id
+                    generationProgressInterval = setInterval(() => checkGenerationProgress(data.project_id), 3000); // Poll every 3 seconds
                 } else {
                     showMessageBox(data.message || 'Failed to start video generation.');
                     toggleButtonLoading(button, false);
@@ -651,19 +782,19 @@
             }
         });
 
-        async function checkGenerationProgress(taskId) {
+        async function checkGenerationProgress(projectId) {
             try {
-                const response = await fetch("{% url 'videocraft_app:check_video_generation_progress' 'DUMMY_TASK_ID' %}".replace('DUMMY_TASK_ID', taskId));
+                const response = await fetch("{% url 'videocraft_app:check_video_generation_progress' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', projectId));
                 const data = await response.json();
 
                 showProgress('generation', true, data.message, data.progress);
 
-                if (data.status === 'SUCCESS') {
+                if (data.status === 'completed') {
                     clearInterval(generationProgressInterval);
-                    showMessageBox('Video generated successfully! Page will now reload.', 'alert', () => {
+                    showMessageBox('Video generated successfully! Page will now reload to show the video.', 'alert', () => {
                         window.location.reload();
                     });
-                } else if (data.status === 'FAILED') {
+                } else if (data.status === 'failed') {
                     clearInterval(generationProgressInterval);
                     showMessageBox(`Video generation failed: ${data.message || 'Unknown error.'}`);
                     document.getElementById('generate-video-btn').disabled = false;
@@ -677,56 +808,62 @@
             }
         }
 
-        // New JavaScript for AI Text Suggestion
-        document.querySelectorAll('.generate-text-btn').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const imageId = e.target.dataset.imageId;
-                const textOverlayInput = document.getElementById(`text-overlay-${imageId}`);
-                
-                // Use toggleButtonLoading for the AI button
-                toggleButtonLoading(e.target, true);
+        // AI Text Suggestion - Using event delegation for robust listener attachment
+        document.getElementById('image-grid-container')?.addEventListener('click', async (e) => {
+            const button = e.target.closest('.generate-text-btn');
+            if (!button) return; // Not a generate text button
 
-                try {
-                    const response = await fetch("{% url 'videocraft_app:generate_text_overlay' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', imageId), {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+            const imageId = button.dataset.imageId;
+            const textOverlayInput = document.getElementById(`text-overlay-${imageId}`);
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.status === 'success') {
-                            textOverlayInput.value = data.text_overlay;
-                            // Automatically save the suggested text
-                            const saveResponse = await fetch("{% url 'videocraft_app:update_image_details' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', imageId), {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRFToken': csrfToken,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ text_overlay: data.text_overlay })
-                            });
+            if (!imageId) {
+                console.error('Image ID not found for AI text suggestion button.');
+                showMessageBox('Error: Image ID not found for text suggestion. Please reload the page.');
+                return;
+            }
+            
+            toggleButtonLoading(button, true);
 
-                            if (!saveResponse.ok) {
-                                const errorData = await saveResponse.json();
-                                showMessageBox(`Error saving AI suggested text: ${errorData.message || 'Unknown error.'}`);
-                            }
-                        } else {
-                            showMessageBox(`AI suggestion failed: ${data.message}`);
+            try {
+                const response = await fetch("{% url 'videocraft_app:generate_text_overlay' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', imageId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        textOverlayInput.value = data.text_overlay;
+                        // Automatically save the suggested text
+                        const saveResponse = await fetch("{% url 'videocraft_app:update_image_details' '00000000-0000-0000-0000-000000000000' %}".replace('00000000-0000-0000-0000-000000000000', imageId), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ text_overlay: data.text_overlay })
+                        });
+
+                        if (!saveResponse.ok) {
+                            const errorData = await saveResponse.json();
+                            showMessageBox(`Error saving AI suggested text: ${errorData.message || 'Unknown error.'}`);
                         }
                     } else {
-                        const errorData = await response.json();
-                        showMessageBox(`Error from server: ${errorData.message}`);
+                        showMessageBox(`AI suggestion failed: ${data.message}`);
                     }
-                } catch (error) {
-                    console.error('Error generating text overlay:', error);
-                    showMessageBox('An error occurred while connecting to the AI service.');
-                } finally {
-                    toggleButtonLoading(e.target, false);
+                } else {
+                    const errorData = await response.json();
+                    showMessageBox(`Error from server: ${errorData.message}`);
                 }
-            });
+            } catch (error) {
+                console.error('Error generating text overlay:', error);
+                showMessageBox('An error occurred while connecting to the AI service.');
+            } finally {
+                toggleButtonLoading(button, false);
+            }
         });
     </script>
 </body>

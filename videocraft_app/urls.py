@@ -13,8 +13,8 @@ urlpatterns = [
     path('image/<uuid:image_id>/delete/', views.delete_image, name='delete_image'),
     path('image/<uuid:image_id>/update/', views.update_image_details, name='update_image_details'),
     path('project/<uuid:project_id>/generate_video/', views.generate_video, name='generate_video'),
-    # Note the path for check_video_progress - it's directly under /videocraft/
-    path('check_video_progress/<str:task_id>/', views.check_video_generation_progress, name='check_video_generation_progress'),
+    # Changed from task_id to project_id for progress check
+    path('check_video_progress/<uuid:project_id>/', views.check_video_generation_progress, name='check_video_generation_progress'),
     path('image/<uuid:image_id>/generate_text_overlay/', views.generate_text_overlay, name='generate_text_overlay'),
-    path('project/<uuid:project_id>/delete/', views.delete_project, name='delete_project'), # Ensure this is also present
+    path('project/<uuid:project_id>/delete/', views.delete_project, name='delete_project'),
 ]

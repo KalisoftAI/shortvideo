@@ -4,23 +4,25 @@ import uuid
 import json
 import logging
 import tempfile
-import threading
+import threading # Used for running video generation in a background thread
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt # Use carefully for API endpoints
+from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.db import transaction # For atomic operations
 
 import boto3
 from botocore.exceptions import ClientError
 
-# MoviePy imports - corrected
+# MoviePy imports (used in the core generation function)
 from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeAudioClip, TextClip, CompositeVideoClip, ColorClip, concatenate_videoclips
-from moviepy.video.fx.all import fadein, fadeout # For transitions
+from moviepy.video.fx.all import fadein, fadeout
 
 from .models import VideoCraftProject, ProjectImage, GeneratedVideo
+from .video_processing_utils import generate_video_core # Import the core video generation function
 
 # Gemini API imports
 import google.generativeai as genai
@@ -55,6 +57,7 @@ except Exception as e:
 
 # --- Helper functions ---
 def _delete_files_s3(s3_keys):
+    """Deletes files from S3 given a list of keys."""
     if not s3_client:
         logger.error("S3 client not initialized. Cannot delete files from S3.")
         return
@@ -67,8 +70,29 @@ def _delete_files_s3(s3_keys):
         except Exception as e:
             logger.error(f"Failed to delete S3 object {key}: {e}")
 
-# This line imports the Celery task, assuming tasks.py exists in the same app
-from .tasks import generate_video_task
+def _upload_file_to_s3(file_obj, destination_prefix='videocraft_uploads'):
+    """Uploads a Django InMemoryUploadedFile or TemporaryUploadedFile to S3."""
+    if not s3_client:
+        logger.error("S3 client not initialized. Cannot upload files to S3.")
+        return None
+
+    filename = file_obj.name
+    # Generate a unique filename to prevent clashes
+    unique_filename = f"{destination_prefix}/{uuid.uuid4()}_{filename}"
+    
+    try:
+        # The S3Boto3Storage handles uploading directly using default_storage if configured
+        # For direct boto3 client usage, we need to read content and upload
+        file_obj.seek(0) # Ensure file pointer is at the beginning
+        s3_client.upload_fileobj(file_obj, settings.AWS_STORAGE_BUCKET_NAME, unique_filename)
+        logger.info(f"Uploaded {filename} to S3 as {unique_filename}")
+        return unique_filename # Return the S3 key
+    except ClientError as e:
+        logger.error(f"Failed to upload {filename} to S3: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error during S3 upload of {filename}: {e}")
+        return None
 
 # --- Core Views for VideoCraft App ---
 
@@ -77,6 +101,12 @@ def videocraft_index(request):
     Displays all existing video projects.
     """
     projects = VideoCraftProject.objects.all().order_by('-created_at')
+    # Pre-fetch generated videos for efficiency
+    for project in projects:
+        try:
+            project.generated_video = GeneratedVideo.objects.get(project=project)
+        except GeneratedVideo.DoesNotExist:
+            project.generated_video = None
     return render(request, 'videocraft_app/index.html', {'projects': projects})
 
 def create_project(request):
@@ -116,12 +146,13 @@ def upload_image(request, project_id):
         project = get_object_or_404(VideoCraftProject, id=project_id)
         
         uploaded_files = request.FILES.getlist('images')
-        for i, f in enumerate(uploaded_files):
-            last_image = project.images.order_by('-order').first()
-            new_order = (last_image.order + 1) if last_image else 0
+        with transaction.atomic(): # Ensure all image saves are atomic
+            for i, f in enumerate(uploaded_files):
+                last_image = project.images.order_by('-order').first()
+                new_order = (last_image.order + 1) if last_image else 0
 
-            project_image = ProjectImage(project=project, image_file=f, order=new_order)
-            project_image.save()
+                project_image = ProjectImage(project=project, image_file=f, order=new_order)
+                project_image.save() # S3 storage handles the upload here
 
         return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request or no images uploaded.'}, status=400)
@@ -134,7 +165,7 @@ def delete_image(request, image_id):
     if request.method == 'POST':
         image = get_object_or_404(ProjectImage, id=image_id)
         if image.image_file:
-            _delete_files_s3([image.image_file.name])
+            _delete_files_s3([image.image_file.name]) # Delete from S3
         image.delete()
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
@@ -160,58 +191,104 @@ def update_image_details(request, image_id):
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON.'}, status=400)
+        except Exception as e:
+            logger.error(f"Error updating image details for {image_id}: {e}")
+            return JsonResponse({'status': 'error', 'message': f'Failed to update image details: {e}'}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 @csrf_exempt
 def generate_video(request, project_id):
     """
     Triggers the video generation process for a project.
+    Now runs in a separate thread and updates database status.
     """
     if request.method == 'POST':
         project = get_object_or_404(VideoCraftProject, id=project_id)
         
+        audio_file_s3_key = None
+        external_audio_url = None
+
+        if 'audio_file' in request.FILES: # Handle local audio file upload
+            uploaded_audio_file = request.FILES['audio_file']
+            audio_file_s3_key = _upload_file_to_s3(uploaded_audio_file, 'videocraft_audio')
+            if not audio_file_s3_key:
+                return JsonResponse({'status': 'error', 'message': 'Failed to upload audio file to S3.'}, status=500)
+            
+            # Store the uploaded audio file in GeneratedVideo model
+            generated_video_obj, created = GeneratedVideo.objects.get_or_create(project=project)
+            generated_video_obj.audio_file = uploaded_audio_file # Assign the file
+            generated_video_obj.audio_file_url = generated_video_obj.audio_file.url # Get S3 URL
+            generated_video_obj.save()
+
+        else: # Try to get external audio URL from JSON body
+            try:
+                data = json.loads(request.body)
+                external_audio_url = data.get('audio_url')
+            except json.JSONDecodeError:
+                pass # No JSON body or invalid JSON
+
         try:
-            data = json.loads(request.body)
-            audio_url = data.get('audio_url')
+            # Extract other parameters from JSON body if present, or use defaults
+            data = json.loads(request.body) if request.body else {}
             transition_type = data.get('transition_type', 'fade')
             text_color = data.get('text_color', 'white')
             font_size = data.get('font_size', 50)
             font = data.get('font', 'sans')
         except json.JSONDecodeError:
-            audio_url = None
             transition_type = 'fade'
             text_color = 'white'
             font_size = 50
             font = 'sans'
 
-        task = generate_video_task.delay(
-            str(project.id), 
-            audio_url, 
-            transition_type, 
-            text_color, 
-            font_size, 
+        # Set initial status for the generated video object
+        generated_video_obj, created = GeneratedVideo.objects.get_or_create(project=project)
+        generated_video_obj.status = 'processing'
+        generated_video_obj.status_message = 'Video generation initiated...'
+        # If a local audio file was uploaded, its 'audio_file' field is already set above
+        # If only an external URL was provided, set that here
+        if external_audio_url and not generated_video_obj.audio_file:
+            generated_video_obj.audio_file_url = external_audio_url
+        generated_video_obj.save()
+
+        # Run video generation in a separate thread
+        thread_args = (
+            str(project.id),
+            audio_file_s3_key, # Pass S3 key for locally uploaded audio
+            external_audio_url, # Pass external URL
+            transition_type,
+            text_color,
+            font_size,
             font
         )
-        return JsonResponse({'status': 'processing', 'task_id': task.id})
+        video_thread = threading.Thread(target=generate_video_core, args=thread_args)
+        video_thread.start()
+
+        return JsonResponse({'status': 'processing', 'project_id': str(project.id)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
-def check_video_generation_progress(request, task_id):
+def check_video_generation_progress(request, project_id):
     """
-    Checks the status of the video generation task.
+    Checks the status of the video generation for a project by looking at the model.
     """
-    from celery.result import AsyncResult
-    task = AsyncResult(task_id)
-    if task.state == 'PENDING':
-        response = {"status": "PENDING", "progress": 0, "message": "Task is waiting to be processed."}
-    elif task.state == 'PROGRESS':
-        response = task.info
-    elif task.state == 'SUCCESS':
-        response = {"status": "SUCCESS", "progress": 100, "message": "Video generation complete!", "video_url": task.result}
-    elif task.state == 'FAILURE':
-        response = {"status": "FAILED", "progress": 0, "message": f"Video generation failed: {task.info}"}
-    else:
-        response = {"status": task.state, "progress": 0, "message": "Unknown status."}
-    return JsonResponse(response)
+    try:
+        generated_video = GeneratedVideo.objects.get(project_id=project_id)
+        response_data = {
+            "status": generated_video.status,
+            "message": generated_video.status_message,
+            "video_url": generated_video.video_file.url if generated_video.video_file else None
+        }
+        if generated_video.status == 'completed':
+            response_data['progress'] = 100
+        elif generated_video.status == 'processing':
+            response_data['progress'] = -1 # Indeterminate progress
+        else: # pending, failed, etc.
+            response_data['progress'] = 0
+        return JsonResponse(response_data)
+    except GeneratedVideo.DoesNotExist:
+        return JsonResponse({"status": "PENDING", "progress": 0, "message": "Video generation not yet started or project not found."}, status=404)
+    except Exception as e:
+        logger.error(f"Error checking video progress for project {project_id}: {e}")
+        return JsonResponse({"status": "FAILED", "progress": 0, "message": f"Error checking progress: {e}"}, status=500)
 
 @csrf_exempt
 def delete_project(request, project_id):
@@ -230,6 +307,8 @@ def delete_project(request, project_id):
             generated_video = GeneratedVideo.objects.get(project=project)
             if generated_video.video_file:
                 s3_keys_to_delete.append(generated_video.video_file.name)
+            if generated_video.audio_file: # Also delete uploaded audio file
+                s3_keys_to_delete.append(generated_video.audio_file.name)
             generated_video.delete()
         except GeneratedVideo.DoesNotExist:
             pass
@@ -258,16 +337,20 @@ def generate_text_overlay(request, image_id):
             response = model.generate_content(prompt)
             
             generated_text = ""
-            if response and response.candidates:
+            # Ensure response and its structure are valid
+            if response and response.candidates and len(response.candidates) > 0 and response.candidates[0].content and response.candidates[0].content.parts:
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'text'):
                         generated_text += part.text
             
             generated_text = generated_text.strip().replace('*', '').replace('"', '')
             
+            # Simple check if the generated text is substantially empty after stripping
+            if not generated_text:
+                 raise ValueError("AI generated an empty or invalid text overlay.")
+
             return JsonResponse({'status': 'success', 'text_overlay': generated_text})
         except Exception as e:
-            logger.error(f"Error generating text overlay for image {image_id}: {e}")
+            logger.error(f"Error generating text overlay for image {image_id}: {e}", exc_info=True)
             return JsonResponse({'status': 'error', 'message': f'Failed to generate text overlay: {e}'}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
-
