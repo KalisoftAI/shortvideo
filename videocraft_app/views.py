@@ -79,7 +79,7 @@ def _upload_file_to_s3(file_obj, destination_prefix='videocraft_uploads'):
     filename = file_obj.name
     # Generate a unique filename to prevent clashes
     unique_filename = f"{destination_prefix}/{uuid.uuid4()}_{filename}"
-    
+
     try:
         # The S3Boto3Storage handles uploading directly using default_storage if configured
         # For direct boto3 client usage, we need to read content and upload
@@ -144,7 +144,7 @@ def upload_image(request, project_id):
     """
     if request.method == 'POST' and request.FILES.getlist('images'):
         project = get_object_or_404(VideoCraftProject, id=project_id)
-        
+
         uploaded_files = request.FILES.getlist('images')
         with transaction.atomic(): # Ensure all image saves are atomic
             for i, f in enumerate(uploaded_files):
@@ -186,7 +186,7 @@ def update_image_details(request, image_id):
                 image.text_overlay = data['text_overlay']
             if 'duration' in data:
                 image.duration = float(data['duration'])
-            
+
             image.save()
             return JsonResponse({'status': 'success'})
         except json.JSONDecodeError:
@@ -204,7 +204,7 @@ def generate_video(request, project_id):
     """
     if request.method == 'POST':
         project = get_object_or_404(VideoCraftProject, id=project_id)
-        
+
         audio_file_s3_key = None
         external_audio_url = None
 
@@ -213,7 +213,7 @@ def generate_video(request, project_id):
             audio_file_s3_key = _upload_file_to_s3(uploaded_audio_file, 'videocraft_audio')
             if not audio_file_s3_key:
                 return JsonResponse({'status': 'error', 'message': 'Failed to upload audio file to S3.'}, status=500)
-            
+
             # Store the uploaded audio file in GeneratedVideo model
             generated_video_obj, created = GeneratedVideo.objects.get_or_create(project=project)
             generated_video_obj.audio_file = uploaded_audio_file # Assign the file
@@ -297,12 +297,12 @@ def delete_project(request, project_id):
     """
     if request.method == 'POST':
         project = get_object_or_404(VideoCraftProject, id=project_id)
-        
+
         s3_keys_to_delete = []
         for img in project.images.all():
             if img.image_file:
                 s3_keys_to_delete.append(img.image_file.name)
-        
+
         try:
             generated_video = GeneratedVideo.objects.get(project=project)
             if generated_video.video_file:
@@ -329,22 +329,22 @@ def generate_text_overlay(request, image_id):
             return JsonResponse({'status': 'error', 'message': 'AI features are not configured. Please set GEMINI_API_KEY.'}, status=503)
 
         image = get_object_or_404(ProjectImage, id=image_id)
-        
+
         try:
             prompt = f"Suggest a concise and creative text overlay for an image that is part of a video project. The image is currently associated with a video. Keep it short, no more than 10-15 words. Example: 'Amazing sunset view' or 'Exploring new paths'. Provide only the text, no extra sentences or formatting."
-            
+
             model = genai.GenerativeModel('gemini-1.5-flash')
             response = model.generate_content(prompt)
-            
+
             generated_text = ""
             # Ensure response and its structure are valid
             if response and response.candidates and len(response.candidates) > 0 and response.candidates[0].content and response.candidates[0].content.parts:
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'text'):
                         generated_text += part.text
-            
+
             generated_text = generated_text.strip().replace('*', '').replace('"', '')
-            
+
             # Simple check if the generated text is substantially empty after stripping
             if not generated_text:
                  raise ValueError("AI generated an empty or invalid text overlay.")

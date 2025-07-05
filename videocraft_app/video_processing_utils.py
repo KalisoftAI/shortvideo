@@ -89,7 +89,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                 generated_video_obj.status_message = f'Downloading image {i+1}/{len(images)}...'
                 generated_video_obj.save()
                 temp_image_file_path = os.path.join(tmpdir, f'image_{img_obj.order}_{img_obj.id}.png')
-                
+
                 s3_image_key = img_obj.image_file.name
                 s3_image_key = s3_image_key.replace('\\', '/')
                 if not s3_image_key.startswith(VideoCraftImageStorage.location + '/'):
@@ -99,7 +99,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
 
                 try:
                     s3_client.download_file(settings.AWS_STORAGE_BUCKET_NAME, s3_image_key, temp_image_file_path)
-                    
+
                     # Ensure img_obj.duration is explicitly converted to float with robust error handling
                     try:
                         image_duration = float(img_obj.duration)
@@ -113,7 +113,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                         return # Exit the function as duration is critical
 
                     img_clip = ImageSequenceClip([temp_image_file_path], durations=[image_duration])
-                    
+
                     # Validate clip dimensions immediately after creation
                     if not isinstance(img_clip.w, (int, float)) or not isinstance(img_clip.h, (int, float)):
                         error_message = f"Image dimensions (width/height) are not valid numbers for image {img_obj.id}. w={img_clip.w}, h={img_clip.h}. This may indicate a corrupted image file or MoviePy issue."
@@ -124,13 +124,13 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                         return
 
                     logger.debug(f"Image clip dimensions for {img_obj.id}: w={img_clip.w}, h={img_clip.h}, duration={img_clip.duration}")
-                    
+
                     # Find max dimensions for consistent video size
                     if img_clip.w > max_clip_width:
                         max_clip_width = img_clip.w
                     if img_clip.h > max_clip_height:
                         max_clip_height = img_clip.h
-                    
+
                     # Add text overlay if present AND text overlays are enabled in settings
                     if img_obj.text_overlay and settings.ENABLE_TEXT_OVERLAYS:
                         try:
@@ -144,7 +144,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                                 method='caption',
                                 size=(int(img_clip.w * 0.8), None) # Ensure width is an integer for size calculation
                             ).set_position(('center', 'bottom')).set_duration(image_duration)
-                            
+
                             img_clip = CompositeVideoClip([img_clip, text_clip])
                         except Exception as text_clip_error:
                             logger.warning(f"Failed to create TextClip for image {img_obj.id} due to: {text_clip_error}. Skipping text overlay. This often indicates ImageMagick is not installed or configured correctly.")
@@ -252,7 +252,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                     audio_clip = None
             else:
                 audio_clip = None
-            
+
             if audio_clip:
                 if audio_clip.duration < final_video_clip.duration:
                     num_loops = int(final_video_clip.duration / audio_clip.duration) + 1
@@ -261,9 +261,9 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                     audio_clip = combined_looped_audio.set_duration(final_video_clip.duration).fx(fadein, 1).fx(fadeout, 1)
                 else:
                     audio_clip = audio_clip.subclip(0, final_video_clip.duration).fx(fadein, 1).fx(fadeout, 1)
-                
+
                 final_video_clip = final_video_clip.set_audio(audio_clip)
-            
+
             generated_video_obj.status_message = 'Rendering video...'
             generated_video_obj.save()
             output_video_filename = f'generated_video_{project_id}.mp4'
@@ -292,7 +292,7 @@ def generate_video_core(project_id, audio_file_s3_key=None, external_audio_url=N
                     generated_video_obj.status = 'completed'
                     generated_video_obj.status_message = 'Video generated and uploaded successfully!'
                     generated_video_obj.save()
-            
+
             logger.info(f"Video generation completed for project {project_id}. Video URL: {generated_video_obj.video_file.url}")
 
     except VideoCraftProject.DoesNotExist:
