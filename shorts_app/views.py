@@ -77,15 +77,28 @@ def get_ai_suggested_clips(transcript: str, video_duration: int):
 
 
 def get_youtube_id(url):
-    # This function remains unchanged
-    if not url: return None
+    """
+    Extracts the YouTube video ID from a YouTube URL.
+    Handles standard (youtube.com/watch), short (youtu.be/), and embed URLs.
+    """
+    if not url: 
+        return None
+        
     query = urlparse(url)
-    if query.hostname in ('www.youtube.com', 'youtube.com'):
-        if query.path == '/watch': return parse_qs(query.query).get('v', [None])[0]
-        if query.path.startswith(('/embed/', '/v/')): return query.path.split('/')[2]
-    if query.hostname == 'youtu.be': return query.path[1:]
+    
+    # Handle standard and mobile URLs (e.g., youtube.com/watch?v=...)
+    if query.hostname in ('youtube.com', 'www.youtube.com', 'm.youtube.com'):
+        if query.path == '/watch':
+            p = parse_qs(query.query)
+            return p.get('v', [None])[0]
+        if query.path.startswith(('/embed/', '/v/')):
+            return query.path.split('/')[-1]
+            
+    # Handle short URLs (e.g., youtu.be/...)
+    if query.hostname == 'youtu.be':
+        return query.path[1:] # The ID is the path component
+        
     return None
-
 
 def index(request):
     processed_videos = DownloadedVideo.objects.all().order_by('-created_at')
