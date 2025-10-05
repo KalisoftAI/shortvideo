@@ -48,8 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'shorts_app',
     'storages',
-    'videocraft_app', # Add your new app here
-    # 'celery', # Removed Celery
+    
 ]
 
 MIDDLEWARE = [
@@ -95,11 +94,7 @@ LOGGING = {
             "level": "DEBUG", # Set to DEBUG to see all log levels (DEBUG, INFO, WARNING, ERROR)
             "propagate": True,
         },
-        "videocraft_app": { # Logger for your videocraft_app
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
+
     },
 }
 ROOT_URLCONF = 'shorts_project.urls'
@@ -107,7 +102,6 @@ ROOT_URLCONF = 'shorts_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'videocraft_app' / 'templates' / 'videocraft_app'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
