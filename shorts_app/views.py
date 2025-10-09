@@ -23,6 +23,7 @@ from botocore.exceptions import ClientError  # Import boto3 for S3 interactions
 
 from .models import DownloadedVideo, GeneratedShort
 import google.generativeai as genai
+import ffmpeg 
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,8 @@ if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.AW
 
 def get_ai_suggested_clips(transcript: str, video_duration: int):
     if not genai_configured or not genai: return []
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    # Remove the "-latest" suffix
+    model = genai.GenerativeModel('gemini-2.5-pro-preview-03-25')
     
     # --- MODIFIED PROMPT ---
     prompt = f"""
@@ -313,92 +315,82 @@ def generate_short(request):
 
         def time_to_seconds(t):
             parts = [int(x) for x in t.split(':')]
-            if len(parts) == 2: # MM:SS
-                return parts[0] * 60 + parts[1]
-            elif len(parts) == 3: # HH:MM:SS
-                return parts[0] * 3600 + parts[1] * 60 + parts[2]
-            return 0
+            return parts[0] * 60 + parts[1] if len(parts) == 2 else parts[0] * 3600 + parts[1] * 60 + parts[2]
 
         start_s, end_s = time_to_seconds(start_time_str), time_to_seconds(end_time_str)
-        temp_video_path = None # Initialize to ensure it's in scope for finally
+        duration = end_s - start_s
+        temp_video_path = None
         temp_short_path = None
         temp_thumb_path = None
         
         try:
-            # Download the video temporarily to local disk for MoviePy processing
             with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_video_file:
                 s3_client.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, parent_video.file_path.name, temp_video_file)
                 temp_video_path = temp_video_file.name
 
-            with VideoFileClip(temp_video_path) as video:
-                subclip = video.subclip(start_s, min(end_s, video.duration))
-                (w, h) = subclip.size
-                final_clip = subclip
+            # === MOVIEPY BLOCK REPLACED WITH FFMPEG (MUCH FASTER) ===
+            short_uuid = uuid.uuid4()
+            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_short_file, \
+                 tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_thumb_file:
+                
+                temp_short_path = temp_short_file.name
+                temp_thumb_path = temp_thumb_file.name
+
+                input_stream = ffmpeg.input(temp_video_path, ss=start_time_str, to=end_time_str)
+                video_stream = input_stream.video
+                audio_stream = input_stream.audio
 
                 if aspect_ratio == '9:16':
-                    target_w, target_h = 1080, 1920
-                    source_aspect = w / h
-                    target_aspect = 9 / 16
-
-                    if source_aspect > target_aspect: # Wider than target (e.g., 16:9)
-                        clip_resized = final_clip.resize(height=target_h)
-                    else: # Taller or same aspect as target
-                        clip_resized = final_clip.resize(width=target_w)
-                    
-                    clip_resized = crop(clip_resized, width=target_w, height=target_h, x_center=clip_resized.w / 2, y_center=clip_resized.h / 2)
-                    final_clip = clip_resized
-
+                    # Vertical video crop and scale logic
+                    video_stream = ffmpeg.filter(video_stream, 'scale', '-1', '1920')
+                    video_stream = ffmpeg.filter(video_stream, 'crop', '1080', '1920')
                 elif aspect_ratio == '16:9':
-                    # If the source is not 16:9, crop or pad
-                    if w / h > 16 / 9: # Wider than 16:9, crop width
-                        final_clip = crop(subclip, width=int(subclip.h * 16 / 9), height=subclip.h, x_center=subclip.w / 2)
-                    elif w / h < 16 / 9: # Taller than 16:9, crop height
-                        final_clip = crop(subclip, width=subclip.w, height=int(subclip.w * 9 / 16), y_center=subclip.h / 2)
+                    # Horizontal video crop logic
+                    video_stream = ffmpeg.filter(video_stream, 'scale', '1920', '-1')
+                    video_stream = ffmpeg.filter(video_stream, 'crop', '1920', '1080')
+                
+                # Create the short video
+                stream = ffmpeg.output(video_stream, audio_stream, temp_short_path, vcodec='libx264', acodec='aac', preset='ultrafast', threads=os.cpu_count())
+                ffmpeg.run(stream, overwrite_output=True, quiet=True)
+                
+                # Create the thumbnail
+                (
+                    ffmpeg
+                    .input(temp_short_path, ss=duration / 2)
+                    .output(temp_thumb_path, vframes=1)
+                    .run(overwrite_output=True, quiet=True)
+                )
 
-                short_uuid = uuid.uuid4()
-                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_short_file, \
-                     tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_thumb_file:
-                    
-                    temp_short_path = temp_short_file.name
-                    temp_thumb_path = temp_thumb_file.name
+                # Upload short and thumbnail to S3
+                short_s3_key = f'shorts/{short_uuid}.mp4'
+                thumbnail_s3_key = f'shorts/{short_uuid}.png'
 
-                    final_clip.write_videofile(temp_short_path, codec="libx264", audio_codec="aac", threads=os.cpu_count(), preset="medium")
-                    final_clip.save_frame(temp_thumb_path, t=final_clip.duration / 2)
-
-                    # Upload short and thumbnail to S3
-                    short_s3_key = f'shorts/{short_uuid}.mp4'
-                    thumbnail_s3_key = f'shorts/{short_uuid}.png'
-
-                    with open(temp_short_path, 'rb') as f:
-                        GeneratedShort.short_path.field.storage.save(short_s3_key, File(f))
-                    with open(temp_thumb_path, 'rb') as f:
-                        GeneratedShort.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
+                with open(temp_short_path, 'rb') as f:
+                    GeneratedShort.short_path.field.storage.save(short_s3_key, File(f))
+                with open(temp_thumb_path, 'rb') as f:
+                    GeneratedShort.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
+            # === END OF FFMPEG BLOCK ===
 
             GeneratedShort.objects.create(
                 parent_video=parent_video,
                 title=clip_data.get('title', 'Untitled Short'),
                 description=clip_data.get('description', ''),
                 tags=clip_data.get('tags', []),
-                short_path=short_s3_key, # Store S3 key
-                thumbnail_path=thumbnail_s3_key, # Store S3 key
+                short_path=short_s3_key,
+                thumbnail_path=thumbnail_s3_key,
                 start_time=start_time_str,
                 end_time=end_time_str
             )
             return JsonResponse({'status': 'success', 'message': 'Short created successfully!'})
         
         finally:
-            # Clean up temporary downloaded video and generated files
-            if temp_video_path and os.path.exists(temp_video_path):
-                os.unlink(temp_video_path)
-            if temp_short_path and os.path.exists(temp_short_path):
-                os.unlink(temp_short_path)
-            if temp_thumb_path and os.path.exists(temp_thumb_path):
-                os.unlink(temp_thumb_path)
+            if temp_video_path and os.path.exists(temp_video_path): os.unlink(temp_video_path)
+            if temp_short_path and os.path.exists(temp_short_path): os.unlink(temp_short_path)
+            if temp_thumb_path and os.path.exists(temp_thumb_path): os.unlink(temp_thumb_path)
                 
     except Exception as e:
         logger.error(f"Error during short generation: {e}", exc_info=True)
         return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {e}'}, status=500)
-
 
 # --- Deletion and Download views (Updated for S3) ---
 def _delete_files_s3(s3_keys):

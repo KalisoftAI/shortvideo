@@ -398,7 +398,6 @@
             });
     }
 
-    // --- THIS FUNCTION IS CRITICAL FOR ATTACHING LISTENERS TO DYNAMIC BUTTONS ---
     function attachCreationEventListeners(container, videoId, clipsData) {
         container.querySelectorAll('.generate-btn').forEach(button => {
             button.addEventListener('click', (e) => {
@@ -457,18 +456,56 @@
         }
     }
 
+    // ===================================================================
+    // START: CORRECTED displayClips FUNCTION
+    // ===================================================================
     function displayClips(data) {
         const resultsContainer = document.getElementById('results-container');
         let contentHtml = '';
 
+        // Part 1: Always generate the AI suggestions if they exist.
         if (data.suggested_clips && data.suggested_clips.length > 0) {
             data.suggested_clips.forEach((clip, index) => {
-                // Added text labels for aspect ratios
-                contentHtml += `<div class="clip-card" data-clip-index="${index}"><h4>${clip.title}</h4><p><strong>Time:</strong> ${clip.start_time} - ${clip.end_time}</p><div style="margin:1rem 0;"><strong>Aspect Ratio:</strong> <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="aspect_ratio_${index}" value="16:9">💻 Horizontal</label> <label><input type="radio" name="aspect_ratio_${index}" value="original">🖼️ Original</label></div><button type="button" class="generate-btn btn btn-primary" data-video-id="${data.video_id}"><span class="btn-text">Create Short</span><div class="spinner"></div></button></div>`;
+                contentHtml += `
+                    <div class="clip-card" data-clip-index="${index}">
+                        <h4>${clip.title}</h4>
+                        <p><strong>Time:</strong> ${clip.start_time} - ${clip.end_time}</p>
+                        <div style="margin:1rem 0;">
+                            <strong>Aspect Ratio:</strong>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="9:16" checked>📱 Vertical</label>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="16:9">💻 Horizontal</label>
+                            <label><input type="radio" name="aspect_ratio_${index}" value="original">🖼️ Original</label>
+                        </div>
+                        <button type="button" class="generate-btn btn btn-primary" data-video-id="${data.video_id}">
+                            <span class="btn-text">Create Short</span>
+                            <div class="spinner"></div>
+                        </button>
+                    </div>`;
             });
-        } else {
-            contentHtml = `<div class="clip-card"><h4>Fallback Suggestion</h4><p>A quick 20-second clip from the beginning.</p><p><strong>Time:</strong> 00:00 - 00:20</p><div style="margin:1rem 0;"><strong>Aspect Ratio:</strong> <label><input type="radio" name="aspect_ratio_fallback" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="aspect_ratio_fallback" value="16:9">💻 Horizontal</label> <label><input type="radio" name="aspect_ratio_fallback" value="original">🖼️ Original</label></div><button type="button" class="fallback-generate-btn btn btn-primary" data-video-id="${data.video_id}"><span class="btn-text">Create Fallback</span><div class="spinner"></div></button></div><div class="manual-card"><h4>Create Manually</h4><p>Enter your own start and end times.</p><div style="display:flex;gap:1rem;align-items:center;margin:1rem 0;"><input type="text" id="manual-start-time" placeholder="Start (MM:SS)" style="width:150px;"><span>to</span><input type="text" id="manual-end-time" placeholder="End (MM:SS)" style="width:150px;"></div><div><strong>Aspect Ratio:</strong> <label><input type="radio" name="manual_aspect_ratio" value="9:16" checked>📱 Vertical</label> <label><input type="radio" name="manual_aspect_ratio" value="16:9">💻 Horizontal</label> <label><input type="radio" name="manual_aspect_ratio" value="original">🖼️ Original</label></div><button type="button" class="manual-generate-btn btn btn-primary" data-video-id="${data.video_id}" style="margin-top:1rem;"><span class="btn-text">Create Manual</span><div class="spinner"></div></button><div id="error-manual" style="color:var(--danger-color);margin-top:0.5rem;"></div></div>`;
         }
+
+        // Part 2: Always append the manual creation card HTML.
+        contentHtml += `
+            <div class="manual-card">
+                <h4>Create Manually</h4>
+                <p>Enter your own start and end times.</p>
+                <div style="display:flex;gap:1rem;align-items:center;margin:1rem 0;">
+                    <input type="text" id="manual-start-time" placeholder="Start (MM:SS)" style="width:150px;">
+                    <span>to</span>
+                    <input type="text" id="manual-end-time" placeholder="End (MM:SS)" style="width:150px;">
+                </div>
+                <div>
+                    <strong>Aspect Ratio:</strong>
+                    <label><input type="radio" name="manual_aspect_ratio" value="9:16" checked>📱 Vertical</label>
+                    <label><input type="radio" name="manual_aspect_ratio" value="16:9">💻 Horizontal</label>
+                    <label><input type="radio" name="manual_aspect_ratio" value="original">🖼️ Original</label>
+                </div>
+                <button type="button" class="manual-generate-btn btn btn-primary" data-video-id="${data.video_id}" style="margin-top:1rem;">
+                    <span class="btn-text">Create Manual</span>
+                    <div class="spinner"></div>
+                </button>
+                <div id="error-manual" style="color:var(--danger-color);margin-top:0.5rem;"></div>
+            </div>`;
 
         const suggestionsCardHTML = `
             <div class="card">
@@ -476,16 +513,19 @@
                 <div class="suggestions-grid">${contentHtml}</div>
             </div>`;
         resultsContainer.innerHTML = suggestionsCardHTML;
-        // Store clipsData on the suggestions-grid itself for easier access by listeners
+
         const suggestionsGrid = resultsContainer.querySelector('.suggestions-grid');
         if (suggestionsGrid) {
             suggestionsGrid.dataset.clipsData = JSON.stringify(data.suggested_clips);
         }
         resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // --- ATTACH EVENT LISTENERS TO NEWLY CREATED BUTTONS ---
         attachCreationEventListeners(resultsContainer, data.video_id, data.suggested_clips);
     }
+    // ===================================================================
+    // END: CORRECTED displayClips FUNCTION
+    // ===================================================================
+
 
     async function handleShortGeneration(payload, button) {
         toggleButtonLoading(button, true);
@@ -498,22 +538,19 @@
             });
             const result = await response.json();
             if (result.status === 'success') {
-                // Using a custom modal/message box instead of alert()
                 showMessageBox('Short created successfully! The page will now reload.');
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 2000); // Reload after 2 seconds
             } else { throw new Error(result.message); }
         } catch (error) {
             showMessageBox(`Error creating short: ${error.message || 'An unexpected error occurred.'}`);
-        } finally { // Ensure UI is reset in all cases
+        } finally {
             toggleButtonLoading(button, false);
             document.querySelectorAll('.generate-btn, .fallback-generate-btn, .manual-generate-btn').forEach(b => b.disabled = false);
             showProgress('generation', false);
         }
     }
 
-    // Custom message box function to replace alert() and confirm()
     function showMessageBox(message, type = 'alert', callback = null) {
-        // Create overlay and message box elements
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -575,14 +612,11 @@
         document.body.appendChild(overlay);
     }
 
-
-    // --- Main Event Listeners for STATIC buttons ---
     document.getElementById('video-form').addEventListener('submit', (e) => {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
         startProcessing(new FormData(e.target), e.target.querySelector('button.btn'));
     });
 
-    // Event listener for "Previously Processed Videos" section for USE and DELETE
     document.querySelector('.card .horizontal-scroll-container').addEventListener('click', e => {
         const button = e.target.closest('button.btn');
         if(!button) return;
@@ -596,34 +630,17 @@
             deleteItem(button);
         }
     });
-
-    // Event listener for "My Generated Shorts" section for DELETE
+    
     document.getElementById('generated-shorts-scroll-container').addEventListener('click', e => {
-        const button = e.target.closest('button.delete-btn');
-        if (button) {
+        const button = e.target.closest('button.btn');
+        if(!button) return;
+
+        if (button.classList.contains('download-btn')) {
             e.preventDefault();
-            deleteItem(button);
-        }
-    });
-
-    // Event listener for "My Generated Shorts" section for DOWNLOAD and DELETE
-    document.getElementById('generated-shorts-scroll-container').addEventListener('click', e => {
-        const button = e.target.closest('button.btn'); // Check if any button was clicked
-        if(!button) return; // If not a button, do nothing
-
-        if (button.classList.contains('download-btn')) { // Agar Download button click hua
-            e.preventDefault(); // Default behaviour ko roko (jo ki anchor tag ka hota)
             const shortId = button.dataset.shortId;
-            const downloadUrl = `/download_short/${shortId}/`; // URL banayein
-
-            // Download ko naye tab mein khole (taki current page reload na ho, balki download start ho)
+            const downloadUrl = `/download_short/${shortId}/`;
             window.open(downloadUrl, '_blank');
-
-            // Ek chhoti delay ke baad current page ko reload karein
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000); // 1 second (1000 milliseconds) ka delay
-        } else if (button.classList.contains('delete-btn')) { // Agar Delete button click hua
+        } else if (button.classList.contains('delete-btn')) {
             e.preventDefault();
             deleteItem(button);
         }
@@ -634,7 +651,6 @@
         const id = button.dataset.id;
         const url = type === 'video' ? `/delete_video/${id}/` : `/delete_short/${id}/`;
         
-        // Using custom confirm box instead of browser's confirm()
         showMessageBox(`Are you sure you want to permanently delete this ${type}?`, 'confirm', async (result) => {
             if (result) {
                 toggleButtonLoading(button, true);
