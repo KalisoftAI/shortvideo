@@ -1,0 +1,554 @@
+{% extends 'shorts_app/base.html' %}
+{% load static %}
+
+{% block title %}ClipCraft AI — Turn Long Videos into Viral Shorts{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'shorts_app/css/landing.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ==============================
+     Hero
+     ============================== -->
+<section class="hero" data-aos-hero>
+    <div class="hero__bg"><div class="orb2"></div></div>
+    <div class="hero__container container">
+        <div class="hero__badge">AI-Powered Video Creation</div>
+        <h1 class="hero__title">
+            Turn long videos into
+            <span class="gradient-text">viral shorts</span>
+            in seconds
+        </h1>
+        <p class="hero__subtitle">
+            ClipCraft AI analyzes your content with Gemini AI, finds the most engaging moments,
+            and generates platform-ready shorts for YouTube, TikTok, and Reels.
+        </p>
+        <div class="hero__actions">
+            <a href="/register/" class="btn btn-primary btn--lg">Start Creating Free</a>
+            <a href="#how-it-works" class="btn btn--outline btn--lg">See How It Works</a>
+        </div>
+        <div class="hero__stats">
+            <div class="hero__stat">
+                <span class="hero__stat-number">10x</span>
+                <span class="hero__stat-label">Faster Editing</span>
+            </div>
+            <div class="hero__stat">
+                <span class="hero__stat-number">AI</span>
+                <span class="hero__stat-label">Powered Suggestions</span>
+            </div>
+            <div class="hero__stat">
+                <span class="hero__stat-number">1-Click</span>
+                <span class="hero__stat-label">YouTube Upload</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Social Proof
+     ============================== -->
+<section class="social-proof" data-aos="fade-up">
+    <div class="container">
+        <p class="social-proof__label">Trusted by content creators worldwide</p>
+        <div class="social-proof__logos">
+            <div class="social-proof__brand">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><polygon points="9.75 15.02 15.5 12 9.75 8.98"/><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/></svg>
+                <span>YouTube</span>
+            </div>
+            <div class="social-proof__brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <span>TikTok</span>
+            </div>
+            <div class="social-proof__brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
+                <span>Instagram</span>
+            </div>
+            <div class="social-proof__brand">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                <span>X / Twitter</span>
+            </div>
+            <div class="social-proof__brand">
+                <span class="social-proof__badge">★★★★★ 4.9/5</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     How It Works
+     ============================== -->
+<section class="how-it-works" id="how-it-works">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">How It Works</span>
+            <h2 class="section__title">Three simple steps</h2>
+            <p class="section__desc">From YouTube link to viral short in under a minute</p>
+        </div>
+        <div class="steps aos-stagger" data-aos="fade-up">
+            <div class="step">
+                <div class="step__number">1</div>
+                <div class="step__content">
+                    <h3>Paste a YouTube Link</h3>
+                    <p>Enter any YouTube video URL. ClipCraft downloads the video and subtitles automatically using yt-dlp.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step__number">2</div>
+                <div class="step__content">
+                    <h3>AI Suggests Clips</h3>
+                    <p>Gemini AI analyzes the transcript and recommends the most engaging 30-90 second segments with titles and tags.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step__number">3</div>
+                <div class="step__content">
+                    <h3>Generate &amp; Publish</h3>
+                    <p>Review suggestions, choose your aspect ratio, and generate. Download or upload to YouTube instantly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Features Grid
+     ============================== -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">Features</span>
+            <h2 class="section__title">Everything you need to create shorts</h2>
+            <p class="section__desc">From AI-powered clip detection to one-click publishing</p>
+        </div>
+        <div class="features__grid aos-stagger" data-aos="fade-up">
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--ai">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14a4 4 0 0 1-8 0"/><path d="M8 12h8"/><circle cx="12" cy="18" r="3"/></svg>
+                </div>
+                <h3>AI Clip Detection</h3>
+                <p>Gemini AI analyzes transcripts to find viral moments — strong hooks, emotional peaks, and clear value segments.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--crop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>
+                </div>
+                <h3>Smart Cropping</h3>
+                <p>Automatically crop to 9:16 vertical or 16:9 horizontal format with intelligent center framing via FFmpeg.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--cloud">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M6 8a6 6 0 0 1 12 0h1a4 4 0 0 1 0 8H5a4 4 0 0 1 0-8h1z"/><path d="M12 22v-8"/><path d="M8 18l4 4 4-4"/></svg>
+                </div>
+                <h3>Cloud Storage</h3>
+                <p>All videos and shorts are stored securely on AWS S3 with pre-signed URLs for instant streaming and download.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--youtube">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98" fill="currentColor"/></svg>
+                </div>
+                <h3>YouTube Upload</h3>
+                <p>Upload shorts directly to YouTube with auto-generated titles, descriptions, and tags from AI.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--fast">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <h3>Lightning Fast</h3>
+                <p>FFmpeg-powered processing cuts clips in seconds, not minutes. Process hours of content in record time.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-card__icon feature-card__icon--tags">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="7.5" r="1.5"/><path d="M21 10l-9 9-9-9L12 3l9 7z"/></svg>
+                </div>
+                <h3>SEO Optimization</h3>
+                <p>AI generates catchy titles, descriptions, and hashtags optimized for discoverability on all platforms.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Product Showcase
+     ============================== -->
+<section class="showcase" id="showcase">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">Product Showcase</span>
+            <h2 class="section__title">See it in action</h2>
+            <p class="section__desc">A clean dashboard that puts AI-powered editing at your fingertips</p>
+        </div>
+        <div class="showcase__mockup" data-aos="fade-up" data-aos-delay="100">
+            <div class="showcase__browser">
+                <div class="showcase__browser-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="showcase__browser-content">
+                    <div class="dashboard-mockup">
+                        <div class="mockup__sidebar">
+                            <div class="mockup__sidebar-logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                            </div>
+                            <nav class="mockup__sidebar-nav">
+                                <span class="mockup__nav-item active">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                </span>
+                                <span class="mockup__nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                                </span>
+                                <span class="mockup__nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                </span>
+                            </nav>
+                        </div>
+                        <div class="mockup__main">
+                            <div class="mockup__header">
+                                <h3>Dashboard</h3>
+                                <div class="mockup__user">
+                                    <span class="mockup__user-avatar">SK</span>
+                                </div>
+                            </div>
+                            <div class="mockup__pastebar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
+                                <span>Paste a YouTube URL to start...</span>
+                                <button class="mockup__pastebar-btn">Generate Shorts</button>
+                            </div>
+                            <div class="mockup__clips">
+                                <div class="mockup__clip">
+                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #6a11cb40, #2575fc40);">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
+                                    </div>
+                                    <div class="mockup__clip-info">
+                                        <div class="mockup__clip-title">Strong Opening Hook</div>
+                                        <div class="mockup__clip-meta">
+                                            <span class="mockup__clip-score"><span class="mockup__score-high">92%</span> Virality</span>
+                                            <span class="mockup__clip-duration">0:00 - 0:45</span>
+                                        </div>
+                                        <div class="mockup__clip-tags">#hook #engagement</div>
+                                    </div>
+                                </div>
+                                <div class="mockup__clip">
+                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #2575fc40, #10b98140);">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
+                                    </div>
+                                    <div class="mockup__clip-info">
+                                        <div class="mockup__clip-title">Key Insight Segment</div>
+                                        <div class="mockup__clip-meta">
+                                            <span class="mockup__clip-score"><span class="mockup__score-high">88%</span> Virality</span>
+                                            <span class="mockup__clip-duration">2:15 - 3:00</span>
+                                        </div>
+                                        <div class="mockup__clip-tags">#value #insight</div>
+                                    </div>
+                                </div>
+                                <div class="mockup__clip">
+                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #10b98140, #f59e0b40);">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
+                                    </div>
+                                    <div class="mockup__clip-info">
+                                        <div class="mockup__clip-title">Humorous Moment</div>
+                                        <div class="mockup__clip-meta">
+                                            <span class="mockup__clip-score"><span class="mockup__score-high">85%</span> Virality</span>
+                                            <span class="mockup__clip-duration">5:30 - 6:15</span>
+                                        </div>
+                                        <div class="mockup__clip-tags">#funny #relatable</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="showcase__callouts">
+                <div class="showcase__callout">
+                    <span class="showcase__callout-icon">📥</span>
+                    <div><strong>One-click import</strong><br>Paste any YouTube link</div>
+                </div>
+                <div class="showcase__callout">
+                    <span class="showcase__callout-icon">🎯</span>
+                    <div><strong>AI suggestions</strong><br>Viral clip candidates</div>
+                </div>
+                <div class="showcase__callout">
+                    <span class="showcase__callout-icon">⚡</span>
+                    <div><strong>Instant generation</strong><br>FFmpeg in seconds</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     AI Workflow
+     ============================== -->
+<section class="workflow" id="workflow">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">AI Workflow</span>
+            <h2 class="section__title">Powered by Gemini AI</h2>
+            <p class="section__desc">Intelligent clip selection based on viral patterns</p>
+        </div>
+        <div class="workflow__diagram aos-stagger" data-aos="fade-up">
+            <div class="workflow__node">
+                <div class="workflow__node-icon">📥</div>
+                <h4>Download</h4>
+                <p>Video + Subtitles</p>
+            </div>
+            <div class="workflow__arrow">&rarr;</div>
+            <div class="workflow__node">
+                <div class="workflow__node-icon">🧠</div>
+                <h4>Analyze</h4>
+                <p>Gemini AI</p>
+            </div>
+            <div class="workflow__arrow">&rarr;</div>
+            <div class="workflow__node">
+                <div class="workflow__node-icon">🎯</div>
+                <h4>Score</h4>
+                <p>Virality Score</p>
+            </div>
+            <div class="workflow__arrow">&rarr;</div>
+            <div class="workflow__node">
+                <div class="workflow__node-icon">✂️</div>
+                <h4>Generate</h4>
+                <p>FFmpeg Crop</p>
+            </div>
+            <div class="workflow__arrow">&rarr;</div>
+            <div class="workflow__node">
+                <div class="workflow__node-icon">☁️</div>
+                <h4>Store</h4>
+                <p>AWS S3</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Pricing Preview
+     ============================== -->
+<section class="pricing" id="pricing">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">Pricing</span>
+            <h2 class="section__title">Simple, transparent pricing</h2>
+            <p class="section__desc">Start free, upgrade as you grow</p>
+        </div>
+        <div class="pricing__toggle" data-aos="fade-up">
+            <span class="pricing__toggle-label active" data-period="monthly">Monthly</span>
+            <div class="pricing__toggle-switch" id="pricingToggle"></div>
+            <span class="pricing__toggle-label" data-period="annual">Annual <span class="pricing__save-badge">Save 20%</span></span>
+        </div>
+        <div class="pricing__cards" data-aos="fade-up" data-aos-delay="100">
+            <div class="pricing-card" data-monthly="$0" data-annual="$0">
+                <h3>Free</h3>
+                <div class="pricing-card__price"><span class="pricing-card__amount">$0</span><span class="pricing-card__period">/month</span></div>
+                <ul class="pricing-card__features">
+                    <li>Process up to 2 videos</li>
+                    <li>AI-powered clip suggestions</li>
+                    <li>Standard video quality</li>
+                    <li>Basic support</li>
+                </ul>
+                <a href="/register/" class="btn btn-primary pricing-card__btn">Get Started</a>
+            </div>
+            <div class="pricing-card pricing-card--featured" data-monthly="$19" data-annual="$15">
+                <div class="pricing-card__badge">Popular</div>
+                <h3>Pro</h3>
+                <div class="pricing-card__price"><span class="pricing-card__amount">$19</span><span class="pricing-card__period">/month</span></div>
+                <ul class="pricing-card__features">
+                    <li>Process up to 20 videos</li>
+                    <li>AI-powered clip suggestions</li>
+                    <li>1080p HD exports</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="/register/" class="btn btn-primary pricing-card__btn">Choose Pro</a>
+            </div>
+            <div class="pricing-card" data-monthly="$49" data-annual="$39">
+                <h3>Business</h3>
+                <div class="pricing-card__price"><span class="pricing-card__amount">$49</span><span class="pricing-card__period">/month</span></div>
+                <ul class="pricing-card__features">
+                    <li>Unlimited video processing</li>
+                    <li>Advanced AI features</li>
+                    <li>4K video exports</li>
+                    <li>Dedicated account manager</li>
+                </ul>
+                <a href="/register/" class="btn btn-primary pricing-card__btn">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Testimonials
+     ============================== -->
+<section class="testimonials" id="testimonials">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">Testimonials</span>
+            <h2 class="section__title">Loved by creators</h2>
+            <p class="section__desc">Join thousands of content creators using ClipCraft AI</p>
+        </div>
+        <div class="testimonials__grid aos-stagger" data-aos="fade-up">
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars">★★★★★</div>
+                <p class="testimonial-card__text">"ClipCraft AI saved me hours of editing. The AI suggestions are incredibly accurate — it always finds the best moments I would have missed."</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">SK</div>
+                    <div>
+                        <strong>Sarah Kim</strong>
+                        <span>YouTube Creator, 500K subs</span>
+                        <div class="testimonial-card__company">@TechTutorials</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars">★★★★★</div>
+                <p class="testimonial-card__text">"I was spending 2 hours per short. Now it takes 2 minutes. The one-click YouTube upload is a game changer for my workflow."</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar" style="background: linear-gradient(135deg, #2575fc, #10b981);">MJ</div>
+                    <div>
+                        <strong>Marcus Johnson</strong>
+                        <span>Social Media Manager</span>
+                        <div class="testimonial-card__company">@BrandBoost</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-card__stars">★★★★★</div>
+                <p class="testimonial-card__text">"The quality of the AI-generated titles and tags is remarkable. My shorts are ranking higher than ever on YouTube search."</p>
+                <div class="testimonial-card__author">
+                    <div class="testimonial-card__avatar" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">EL</div>
+                    <div>
+                        <strong>Emily Liu</strong>
+                        <span>Content Strategist</span>
+                        <div class="testimonial-card__company">@GrowthLab</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     FAQ
+     ============================== -->
+<section class="faq" id="faq">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">FAQ</span>
+            <h2 class="section__title">Frequently asked questions</h2>
+        </div>
+        <div class="faq__list" data-aos="fade-up">
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>How does the AI clip selection work?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Gemini AI analyzes the video transcript for strong hooks, emotional peaks, and valuable insights, then scores each segment for viral potential on a scale of 1-10.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>What video formats are supported?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Any YouTube video with subtitles. ClipCraft downloads in MP4 format and outputs in 9:16 vertical or 16:9 horizontal aspect ratios.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Can I upload shorts directly to YouTube?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Yes. The YouTube uploader module handles OAuth authentication and publishes shorts with AI-generated titles, descriptions, and tags to your channel.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Is there a limit on video length?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>No length limit. ClipCraft processes any duration and suggests clips between 30-90 seconds for optimal short-form engagement.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Can I manually set clip boundaries?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Absolutely. You can use AI suggestions or enter custom start and end times manually for full creative control over every clip.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Is my data secure and private?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Yes. All videos are encrypted at rest on AWS S3. We never share your content or data with third parties. You can delete your videos at any time.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Can I cancel my subscription anytime?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Absolutely. No long-term contracts. Cancel anytime from your account settings. Your data remains accessible until your billing period ends.</p>
+                </div>
+            </div>
+            <div class="faq__item">
+                <button class="faq__question">
+                    <span>Do you offer a money-back guarantee?</span>
+                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="faq__answer">
+                    <p>Yes. Pro and Business plans come with a 14-day money-back guarantee. No questions asked. If ClipCraft isn't right for you, we'll refund your payment.</p>
+                </div>
+            </div>
+        </div>
+        <div class="faq__contact" data-aos="fade-up">
+            <p>Still have questions? We're here to help.</p>
+            <a href="mailto:support@clipcraft.ai">Contact our support team &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Final CTA
+     ============================== -->
+<section class="cta" data-aos="fade-up">
+    <div class="container">
+        <div class="cta__content">
+            <h2 class="cta__title">Ready to create viral shorts?</h2>
+            <p class="cta__desc">Join thousands of creators who are saving hours with AI-powered video editing. Start free, no credit card required.</p>
+            <a href="/register/" class="btn btn-primary btn--lg">Get Started Free</a>
+            <div class="cta__trust">
+                <span class="cta__trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Secure checkout
+                </span>
+                <span class="cta__trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    No credit card required
+                </span>
+                <span class="cta__trust-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13V5l9-4 9 4v5z"/></svg>
+                    Cancel anytime
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shorts_app/js/landing.js' %}"></script>
+{% endblock %}

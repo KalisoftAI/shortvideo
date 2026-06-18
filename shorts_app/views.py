@@ -22,6 +22,11 @@ import boto3
 from botocore.exceptions import ClientError  # Import boto3 for S3 interactions
 
 from .models import DownloadedVideo, GeneratedShort
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import redirect
+from django.contrib import messages
+from .forms import UserRegisterForm
 import google.generativeai as genai
 import ffmpeg 
 
@@ -51,6 +56,49 @@ if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.AW
         )
     except Exception as e:
         logger.error(f"Error initializing S3 client: {e}. S3 features disabled.")
+
+def home(request):
+    return render(request, 'shorts_app/landing/home.html')
+
+def pricing(request):
+    return render(request, 'shorts_app/pricing.html')
+
+# --- Authentication Views ---
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('shorts_app:index')
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            login(request, form.get_user())
+            if request.POST.get('remember_me'):
+                request.session.set_expiry(1209600)  # 2 weeks
+            else:
+                request.session.set_expiry(0)  # Until browser close
+            return redirect('shorts_app:index')
+        messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'shorts_app/auth/login.html', {'form': form})
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('shorts_app:index')
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f'Welcome, {user.first_name or user.username}!')
+            return redirect('shorts_app:index')
+    else:
+        form = UserRegisterForm()
+    return render(request, 'shorts_app/auth/register.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('shorts_app:home')
 
 # # --- AI Suggestion, Get YouTube ID, Index, Check Progress (Unchanged) ---
 # def get_ai_suggested_clips(transcript: str, video_duration: int):

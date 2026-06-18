@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ClipCraft AI{% endblock %}</title>
+    <meta name="description" content="ClipCraft AI turns long YouTube videos into viral shorts using Gemini AI. AI-powered clip detection, smart cropping, and one-click YouTube upload.">
+    <meta property="og:title" content="ClipCraft AI — Turn Long Videos into Viral Shorts">
+    <meta property="og:description" content="AI-powered video editing that finds viral moments and generates platform-ready shorts in seconds.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://clipcraft.ai">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236a11cb'/%3E%3Cstop offset='100%25' stop-color='%232575fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 8l12 8-12 8V8z' fill='white'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'shorts_app/css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include 'shorts_app/components/navbar.html' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'shorts_app/components/footer.html' %}
+
+    <script src="{% static 'shorts_app/js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

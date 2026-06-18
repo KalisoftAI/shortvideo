@@ -32,7 +32,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-!7#(gj$j&nzn-*8$s#8w&$(z@&2t5r(lnk)ek=)vkj!)#o7z-q')
 
 # SECURITY WARNING: don't run with debug turned on in production!'
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DJANGO_DEBUG=True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
@@ -122,8 +123,12 @@ WSGI_APPLICATION = 'shorts_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'shortvideo'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -159,6 +164,11 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Auth settings
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -174,6 +184,9 @@ MEDIA_URL = '/media/'
 # MEDIA_ROOT is not directly used for S3, but still good to define for local development fallback if needed
 MEDIA_ROOT = BASE_DIR / 'media'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 ## AWS S3 Settings
 # IMPORTANT: For production, use environment variables for these values!
