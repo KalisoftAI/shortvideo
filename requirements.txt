@@ -10,3 +10,4 @@ boto3
 ffmpeg-python   # FFmpeg commands ko behtar handle karne ke liye
 django-storages
 python-dotenv
+psycopg2-binary
