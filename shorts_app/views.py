@@ -23,6 +23,7 @@ from botocore.exceptions import ClientError  # Import boto3 for S3 interactions
 
 from .models import DownloadedVideo, GeneratedShort
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import redirect
 from django.contrib import messages
@@ -232,18 +233,21 @@ def get_youtube_id(url):
 
     return None
 
+@login_required
 def index(request):
     processed_videos = DownloadedVideo.objects.all().order_by('-created_at')
     generated_shorts = GeneratedShort.objects.select_related('parent_video').order_by('-created_at')
     return render(request, 'shorts_app/index.html', {'videos': processed_videos, 'shorts': generated_shorts})
 
 
+@login_required
 def check_progress(request, task_id):
     return JsonResponse(cache.get(task_id, {"status": "PENDING", "progress": 0, "message": "Initializing..."}))
 
 # Or in views.py (e.g., at the start of process_video)
 logger.info(f"DEBUG: Using S3 bucket: {settings.AWS_STORAGE_BUCKET_NAME}")
 
+@login_required
 def process_video(request):
     if request.method != 'POST': return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
 
@@ -353,6 +357,7 @@ def process_video(request):
     return JsonResponse({'status': 'processing', 'task_id': task_id})
 
 
+@login_required
 def generate_short(request):
     if request.method != 'POST': return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
     try:
@@ -455,6 +460,7 @@ def _delete_files_s3(s3_keys):
             logger.error(f"Failed to delete S3 object {key}: {e}")
 
 
+@login_required
 def delete_video(request, video_id):
     if request.method == 'POST':
         video = get_object_or_404(DownloadedVideo, video_id=video_id)
@@ -467,6 +473,7 @@ def delete_video(request, video_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 
+@login_required
 def delete_short(request, short_id):
     if request.method == 'POST':
         short = get_object_or_404(GeneratedShort, id=short_id)
@@ -476,6 +483,7 @@ def delete_short(request, short_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
 
 
+@login_required
 def download_short(request, short_id):
     if not s3_client:
         raise Http404("S3 client not configured.")

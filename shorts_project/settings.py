@@ -29,13 +29,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-!7#(gj$j&nzn-*8$s#8w&$(z@&2t5r(lnk)ek=)vkj!)#o7z-q')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError('DJANGO_SECRET_KEY environment variable is not set')
 
-# SECURITY WARNING: don't run with debug turned on in production!'
-DJANGO_DEBUG=True
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
 
 
 # Application definition
@@ -81,21 +84,27 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "simple", # Use the 'simple' formatter
+            "formatter": "simple",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "shorts_app.log",
+            "maxBytes": 10485760,
+            "backupCount": 5,
+            "formatter": "verbose",
         },
     },
     "loggers": {
         "django": {
-            "handlers": ["console"],
-            "level": "INFO", # Or "WARNING" to reduce noise from Django itself
+            "handlers": ["console", "file"],
+            "level": "INFO",
             "propagate": True,
         },
-        "shorts_app": { # Name of your Django app
-            "handlers": ["console"],
-            "level": "DEBUG", # Set to DEBUG to see all log levels (DEBUG, INFO, WARNING, ERROR)
+        "shorts_app": {
+            "handlers": ["console", "file"],
+            "level": "INFO" if not DEBUG else "DEBUG",
             "propagate": True,
         },
-
     },
 }
 ROOT_URLCONF = 'shorts_project.urls'
@@ -164,6 +173,22 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Security settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+
+USE_HTTPS = os.environ.get('USE_HTTPS', 'False') == 'True'
+if USE_HTTPS:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
 # Auth settings
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
@@ -173,6 +198,7 @@ LOGOUT_REDIRECT_URL = '/'
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
