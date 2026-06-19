@@ -227,6 +227,41 @@
         .btn.loading .spinner { display: block; }
         .btn.loading .btn-text { display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .manual-time-inputs { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
+        .manual-time-inputs input { width: 150px; padding: 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header { flex-wrap: wrap; gap: 0.5rem; }
+            .header__logo { width: 40px; height: 40px; margin-right: 0.5rem; }
+            .header__title { font-size: 1.5rem; }
+            .process-form { flex-direction: column; gap: 0.75rem; }
+            .process-form input[type="text"] { width: 100%; }
+            .process-form .btn { width: 100%; }
+            .card { padding: 1rem; }
+            h2 { font-size: 1.2rem; }
+            .video-card { width: 260px; }
+            .video-card__thumb { height: 140px; }
+            .short-card { width: 260px; }
+            .suggestions-grid > .clip-card,
+            .suggestions-grid > .manual-card { min-width: unset; flex: 1 1 100%; }
+            .suggestions-grid { flex-direction: column; }
+            .horizontal-scroll-container { gap: 0.75rem; padding: 1rem 0; }
+            .manual-time-inputs { flex-direction: column; }
+            .manual-time-inputs input { width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .header__title { font-size: 1.2rem; }
+            .header__logo { width: 32px; height: 32px; }
+            .video-card { width: 220px; }
+            .short-card { width: 220px; }
+            .video-card__thumb { height: 120px; }
+            .btn { padding: 10px 16px; font-size: 0.9rem; }
+            .video-card__actions { flex-direction: column; gap: 0.4rem; }
+            .short-card__actions { flex-direction: column; gap: 0.4rem; }
+        }
     </style>
 </head>
 <body>
@@ -489,10 +524,10 @@
             <div class="manual-card">
                 <h4>Create Manually</h4>
                 <p>Enter your own start and end times.</p>
-                <div style="display:flex;gap:1rem;align-items:center;margin:1rem 0;">
-                    <input type="text" id="manual-start-time" placeholder="Start (MM:SS)" style="width:150px;">
+                <div class="manual-time-inputs">
+                    <input type="text" id="manual-start-time" placeholder="Start (MM:SS)">
                     <span>to</span>
-                    <input type="text" id="manual-end-time" placeholder="End (MM:SS)" style="width:150px;">
+                    <input type="text" id="manual-end-time" placeholder="End (MM:SS)">
                 </div>
                 <div>
                     <strong>Aspect Ratio:</strong>
