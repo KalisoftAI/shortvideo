@@ -236,16 +236,13 @@ def get_youtube_id(url):
 @login_required
 def index(request):
     processed_videos = DownloadedVideo.objects.all().order_by('-created_at')
-    generated_shorts = GeneratedShort.objects.select_related('parent_video').order_by('-created_at')
+    generated_shorts = GeneratedShort.objects.filter(user=request.user).select_related('parent_video').order_by('-created_at')
     return render(request, 'shorts_app/index.html', {'videos': processed_videos, 'shorts': generated_shorts})
 
 
 @login_required
 def check_progress(request, task_id):
     return JsonResponse(cache.get(task_id, {"status": "PENDING", "progress": 0, "message": "Initializing..."}))
-
-# Or in views.py (e.g., at the start of process_video)
-logger.info(f"DEBUG: Using S3 bucket: {settings.AWS_STORAGE_BUCKET_NAME}")
 
 @login_required
 def process_video(request):
@@ -325,15 +322,21 @@ def process_video(request):
                         with open(temp_thumbnail_path_jpg, 'rb') as f:
                             DownloadedVideo.thumbnail_path.field.storage.save(thumbnail_s3_key, File(f))
 
-                    video_record, _ = DownloadedVideo.objects.update_or_create(
+                    video_record, created = DownloadedVideo.objects.get_or_create(
                         video_id=video_id,
                         defaults={
+                            'user': request.user,
                             'title': info.get('title', 'N/A'),
                             'duration': info.get('duration', 0),
-                            'file_path': video_s3_key, # Store the S3 key
-                            'thumbnail_path': thumbnail_s3_key, # Store the S3 key
+                            'file_path': video_s3_key,
+                            'thumbnail_path': thumbnail_s3_key,
                         }
                     )
+                    if not created:
+                        for attr, val in [('title', info.get('title', 'N/A')), ('duration', info.get('duration', 0)),
+                                          ('file_path', video_s3_key), ('thumbnail_path', thumbnail_s3_key)]:
+                            setattr(video_record, attr, val)
+                        video_record.save()
 
                     # Process transcript if exists
                     suggested_clips = []
@@ -426,6 +429,7 @@ def generate_short(request):
 
             GeneratedShort.objects.create(
                 parent_video=parent_video,
+                user=request.user,
                 title=clip_data.get('title', 'Untitled Short'),
                 description=clip_data.get('description', ''),
                 tags=clip_data.get('tags', []),
@@ -464,6 +468,8 @@ def _delete_files_s3(s3_keys):
 def delete_video(request, video_id):
     if request.method == 'POST':
         video = get_object_or_404(DownloadedVideo, video_id=video_id)
+        if video.user and video.user != request.user:
+            return JsonResponse({'status': 'error', 'message': 'Permission denied.'}, status=403)
         keys_to_delete = [video.file_path.name]
         if video.thumbnail_path:
             keys_to_delete.append(video.thumbnail_path.name)
@@ -476,7 +482,7 @@ def delete_video(request, video_id):
 @login_required
 def delete_short(request, short_id):
     if request.method == 'POST':
-        short = get_object_or_404(GeneratedShort, id=short_id)
+        short = get_object_or_404(GeneratedShort, id=short_id, user=request.user)
         _delete_files_s3([short.short_path.name, short.thumbnail_path.name])
         short.delete()
         return JsonResponse({'status': 'success'})
@@ -488,7 +494,7 @@ def download_short(request, short_id):
     if not s3_client:
         raise Http404("S3 client not configured.")
 
-    short = get_object_or_404(GeneratedShort, id=short_id)
+    short = get_object_or_404(GeneratedShort, id=short_id, user=request.user)
     s3_key = short.short_path.name
 
     try:

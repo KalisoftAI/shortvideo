@@ -14,10 +14,10 @@ class ShortsStorage(S3Boto3Storage):
 
 
 class DownloadedVideo(models.Model):
-    video_id = models.CharField(max_length=20, unique=True, primary_key=True)
+    video_id = models.CharField(max_length=20, primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=255)
     duration = models.IntegerField()
-    # Use FileField with custom storage for S3
     file_path = models.FileField(storage=YoutubeVideoStorage())
     thumbnail_path = models.FileField(storage=YoutubeVideoStorage(), null=True, blank=True)
     suggestions = models.JSONField(null=True, blank=True)
@@ -29,6 +29,7 @@ class DownloadedVideo(models.Model):
 class GeneratedShort(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     parent_video = models.ForeignKey(DownloadedVideo, on_delete=models.CASCADE, related_name='shorts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     tags = models.JSONField(default=list)
