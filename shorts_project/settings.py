@@ -181,14 +181,23 @@ X_FRAME_OPTIONS = 'DENY'
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 
+# --- SSL/HTTPS Configuration ---
+# Tell Django to trust the X-Forwarded-Proto header from Nginx reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 USE_HTTPS = os.environ.get('USE_HTTPS', 'False') == 'True'
 if USE_HTTPS:
+    # Redirect all HTTP to HTTPS
     SECURE_SSL_REDIRECT = True
+    # Secure session and CSRF cookies (sent only over HTTPS)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # HTTP Strict Transport Security (HSTS) — 1 year
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Prevent hotlinking / clickjacking
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # Auth settings
 LOGIN_URL = '/login/'
