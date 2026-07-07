@@ -6,8 +6,9 @@ import json
 import logging
 import re
 import threading
+import glob
 import webvtt
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlencode
 import tempfile # Import tempfile for temporary local storage
 
 from django.shortcuts import render, get_object_or_404
@@ -23,15 +24,20 @@ from botocore.exceptions import ClientError  # Import boto3 for S3 interactions
 
 from .models import DownloadedVideo, GeneratedShort
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import redirect
 from django.contrib import messages
 from .forms import UserRegisterForm
 import google.generativeai as genai
-import ffmpeg 
+import ffmpeg
+import httpx
+import secrets
 
 logger = logging.getLogger(__name__)
+
+FREE_PLAN_VIDEO_LIMIT = 2
 
 # --- Configure Gemini (Unchanged) ---
 genai_configured = False
@@ -101,6 +107,90 @@ def logout_view(request):
     logout(request)
     return redirect('shorts_app:home')
 
+# --- Google OAuth ---
+
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+def google_login_view(request):
+    state = secrets.token_urlsafe(32)
+    request.session['google_oauth_state'] = state
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+    }
+    print("=== GOOGLE OAUTH DEBUG ===")
+    print("redirect_uri being sent:", repr(settings.GOOGLE_REDIRECT_URI))
+    print("full auth url:", f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
+    print("==========================")
+    return redirect(f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
+
+
+def google_callback_view(request):
+    if request.GET.get('error'):
+        messages.error(request, "Google sign-in was cancelled.")
+        return redirect('shorts_app:login')
+
+    returned_state = request.GET.get('state')
+    expected_state = request.session.pop('google_oauth_state', None)
+    if not returned_state or returned_state != expected_state:
+        messages.error(request, "Invalid OAuth state. Please try again.")
+        return redirect('shorts_app:login')
+
+    code = request.GET.get('code')
+    if not code:
+        messages.error(request, "Google sign-in failed. Please try again.")
+        return redirect('shorts_app:login')
+
+    try:
+        token_response = httpx.post(GOOGLE_TOKEN_URL, data={
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        }, timeout=10)
+        token_response.raise_for_status()
+        access_token = token_response.json()["access_token"]
+
+        userinfo_response = httpx.get(GOOGLE_USERINFO_URL, headers={
+            "Authorization": f"Bearer {access_token}"
+        }, timeout=10)
+        userinfo_response.raise_for_status()
+        userinfo = userinfo_response.json()
+    except httpx.HTTPError as e:
+        logger.error(f"Google OAuth error: {e}")
+        messages.error(request, "Something went wrong signing in with Google. Please try again.")
+        return redirect('shorts_app:login')
+
+    email = userinfo.get("email")
+    full_name = userinfo.get("name", "")
+    if not email:
+        messages.error(request, "Could not retrieve email from Google.")
+        return redirect('shorts_app:login')
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        base_username = email.split("@")[0]
+        username = base_username
+        suffix = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{suffix}"
+            suffix += 1
+        user = User(username=username, email=email, first_name=full_name)
+        user.set_unusable_password()
+        user.save()
+
+    login(request, user)
+    messages.success(request, f"Welcome, {user.first_name or user.username}!")
+    return redirect('shorts_app:index')
+
 # # --- AI Suggestion, Get YouTube ID, Index, Check Progress (Unchanged) ---
 # def get_ai_suggested_clips(transcript: str, video_duration: int):
 #     if not genai_configured or not genai: return []
@@ -154,14 +244,20 @@ def logout_view(request):
 
 def get_ai_suggested_clips(transcript: str, video_duration: int):
     if not genai_configured or not genai: return []
-    # Remove the "-latest" suffix
-    model = genai.GenerativeModel('gemini-2.5-pro-preview-03-25')
-    
-    # --- MODIFIED PROMPT ---
+    if not transcript:
+        logger.warning("Empty transcript provided to Gemini")
+        return []
+
+    model_names = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash']
+    last_error = None
+
     prompt = f"""
             You are 'ClipGenius,' an AI expert specializing in identifying viral moments within long-form video content for platforms like YouTube Shorts, TikTok, and Reels. Your goal is to find the most compelling segments that can stand alone as engaging short videos.
 
             Analyze the following transcript (total video duration: {video_duration} seconds).
+
+            **Transcript:**
+            {transcript}
 
             **Your criteria for selecting a compelling segment are:**
             1.  **Strong Hook:** The clip must start with a question, a surprising statement, or immediate action to grab the viewer's attention within the first 3 seconds.
@@ -198,16 +294,25 @@ def get_ai_suggested_clips(transcript: str, video_duration: int):
             ]
             ```
             """
-    # --- END OF MODIFIED PROMPT ---
-            
-    try:
-        response = model.generate_content(prompt)
-        json_response_text = response.text.strip().replace("```json", "").replace("```", "")
-        raw_clips = json.loads(json_response_text)
-        return [c for c in raw_clips if isinstance(c, dict) and all(k in c for k in ['start_time', 'title', 'tags'])]
-    except Exception as e:
-        logger.error(f"Error calling Gemini API: {e}", exc_info=True)
-        return []
+
+    for model_name in model_names:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            json_response_text = response.text.strip().replace("```json", "").replace("```", "")
+            raw_clips = json.loads(json_response_text)
+            clips = [c for c in raw_clips if isinstance(c, dict) and all(k in c for k in ['start_time', 'title', 'tags'])]
+            if clips:
+                logger.info(f"Gemini model '{model_name}' returned {len(clips)} clips")
+                return clips
+            logger.warning(f"Gemini model '{model_name}' returned empty clip list, trying next model...")
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Gemini model '{model_name}' failed: {e}")
+            continue
+
+    logger.error(f"All Gemini models failed. Last error: {last_error}", exc_info=True)
+    return []
 
 def get_youtube_id(url):
     """
@@ -237,7 +342,11 @@ def get_youtube_id(url):
 def index(request):
     processed_videos = DownloadedVideo.objects.all().order_by('-created_at')
     generated_shorts = GeneratedShort.objects.filter(user=request.user).select_related('parent_video').order_by('-created_at')
-    return render(request, 'shorts_app/index.html', {'videos': processed_videos, 'shorts': generated_shorts})
+    video_count = DownloadedVideo.objects.filter(user=request.user).count()
+    return render(request, 'shorts_app/index.html', {
+        'videos': processed_videos, 'shorts': generated_shorts,
+        'video_count': video_count, 'video_limit': FREE_PLAN_VIDEO_LIMIT,
+    })
 
 
 @login_required
@@ -289,7 +398,7 @@ def process_video(request):
                         'noplaylist': True,
                         'writesubtitles': True,
                         'writeautomaticsub': True,
-                        'subtitleslangs': ['en'],
+                        'subtitleslangs': ['en', 'en-US', 'en-GB', 'hi', 'mr'],
                         'subtitlesformat': 'vtt',
                         'writethumbnail': True,
                         'nocolor': True,
@@ -301,7 +410,8 @@ def process_video(request):
                     temp_video_path = os.path.join(tmpdir, f'{video_id}.mp4')
                     temp_thumbnail_path_webp = os.path.join(tmpdir, f'{video_id}.webp')
                     temp_thumbnail_path_jpg = os.path.join(tmpdir, f'{video_id}.jpg')
-                    temp_transcript_path = os.path.join(tmpdir, f'{video_id}.en.vtt')
+                    vtt_files = glob.glob(os.path.join(tmpdir, f'{video_id}.*.vtt'))
+                    temp_transcript_path = vtt_files[0] if vtt_files else None
 
                     if not os.path.exists(temp_video_path):
                         cache.set(task_id, {'status': 'error', 'message': f'Video file not found after download.'})
@@ -340,7 +450,7 @@ def process_video(request):
 
                     # Process transcript if exists
                     suggested_clips = []
-                    if os.path.exists(temp_transcript_path):
+                    if temp_transcript_path:
                         transcript = " ".join([c.text.strip().replace('\n', ' ') for c in webvtt.read(temp_transcript_path)])
                         if transcript: suggested_clips = get_ai_suggested_clips(transcript, video_record.duration)
                     video_record.suggestions = suggested_clips
@@ -352,9 +462,23 @@ def process_video(request):
                 return
 
         video_record = get_object_or_404(DownloadedVideo, video_id=video_id)
-        cache.set(task_id, {'status': 'complete', 'result': {
+        result = {
             'video_id': video_id, 'video_title': video_record.title, 'suggested_clips': video_record.suggestions,
-        }})
+        }
+        if not video_record.suggestions:
+            result['warning'] = "Transcript not available for this video (no subtitles found in supported languages). You can still select clips manually."
+        cache.set(task_id, {'status': 'complete', 'result': result})
+
+    # TODO: replace this flat limit with a premium/subscription check once
+    # billing is integrated (e.g. skip this block if request.user.is_premium)
+    if not DownloadedVideo.objects.filter(video_id=video_id, user=request.user).exists():
+        existing_count = DownloadedVideo.objects.filter(user=request.user).count()
+        if existing_count >= FREE_PLAN_VIDEO_LIMIT:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Free plan allows only {FREE_PLAN_VIDEO_LIMIT} videos. Upgrade your plan to process more.',
+                'limit_reached': True,
+            }, status=403)
 
     threading.Thread(target=long_running_task).start()
     return JsonResponse({'status': 'processing', 'task_id': task_id})

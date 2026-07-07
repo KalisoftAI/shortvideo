@@ -5,6 +5,207 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'shorts_app/css/landing.css' %}">
+<style>
+.yt-showcase { padding: 5rem 0; }
+.yt-showcase__scroll {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.25rem 1.5rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+.yt-showcase__scroll::-webkit-scrollbar { height: 6px; }
+.yt-showcase__scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.yt-card {
+    flex: 0 0 220px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: var(--text);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-white);
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.yt-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-lg); }
+.yt-card__thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    background: #000;
+}
+.yt-card__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.9; }
+.yt-card__play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 52px; height: 52px;
+    background: rgba(0,0,0,0.55);
+    border: 2px solid rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.1rem;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+.yt-card:hover .yt-card__play { background: var(--primary); transform: translate(-50%, -50%) scale(1.1); }
+.yt-card__label {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--primary);
+}
+@media (max-width: 768px) {
+    .yt-card { flex: 0 0 160px; }
+    .yt-showcase { padding: 3rem 0; }
+}
+.media-showcase { padding: 5rem 0; }
+.media-showcase__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+.media-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    aspect-ratio: 4/5;
+}
+.media-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+.media-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.media-card--video video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
+@media (max-width: 768px) {
+    .media-showcase { padding: 3rem 0; }
+    .media-showcase__grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+}
+</style>
+<style>
+.yt-cta { padding: 4rem 0; }
+.yt-cta__box {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+    background: var(--gradient, linear-gradient(135deg, #6a11cb, #2575fc));
+    color: #fff;
+    padding: 3rem 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+}
+.yt-cta__icon { color: #fff; margin-bottom: 1rem; display: flex; justify-content: center; }
+.yt-cta__title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+.yt-cta__desc { font-size: 1rem; opacity: 0.9; margin-bottom: 1.75rem; }
+.yt-cta__buttons { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+.yt-cta__btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    color: #cc0000;
+    font-weight: 700;
+    padding: 0.85rem 1.8rem;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.yt-cta__btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
+.yt-cta__channels { font-size: 0.9rem; opacity: 0.85; }
+.yt-cta__channels a { color: #fff; font-weight: 600; text-decoration: underline; }
+.yt-cta__dot { margin: 0 0.5rem; }
+@media (max-width: 768px) {
+    .yt-cta__box { padding: 2rem 1.25rem; }
+    .yt-cta__title { font-size: 1.4rem; }
+    .yt-cta__channels { display: flex; flex-direction: column; gap: 0.25rem; }
+    .yt-cta__dot { display: none; }
+}
+.testimonials { padding: 2.5rem 0; }
+.testimonials .section__title { font-size: 1.6rem; }
+.testimonials .section__desc { font-size: 0.9rem; }
+.testimonial-card { padding: 1.25rem; }
+.testimonial-card__text { font-size: 0.9rem; }
+.testimonial-card__avatar { width: 40px; height: 40px; font-size: 0.85rem; }
+</style>
+<style>
+.how-it-works { padding: 3rem 0; }
+.section__header--compact { margin-bottom: 2rem; }
+.section__badge--sticker {
+    display: inline-block;
+    transform: rotate(-2deg);
+    border: 2px solid var(--primary);
+    font-weight: 700;
+}
+.section__title--gradient {
+    background: var(--gradient, linear-gradient(135deg, #6a11cb, #2575fc));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.steps-timeline {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-top: 1rem;
+}
+.steps-timeline__line {
+    position: absolute;
+    top: 28px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary, #6a11cb), #2575fc);
+    z-index: 0;
+    border-radius: 4px;
+}
+.step-tl {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    background: var(--bg-white);
+    padding: 1.5rem 1.25rem;
+    border-radius: var(--radius);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.step-tl:hover { transform: translateY(-8px) scale(1.03); box-shadow: var(--shadow-lg); }
+.step-tl__badge {
+    width: 44px; height: 44px;
+    margin: 0 auto 0.5rem;
+    border-radius: 50%;
+    background: var(--gradient, linear-gradient(135deg, #6a11cb, #2575fc));
+    color: #fff;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(106,17,203,0.35);
+}
+.step-tl__emoji { font-size: 1.8rem; margin-bottom: 0.5rem; }
+.step-tl h3 { font-family: 'Poppins', sans-serif; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.step-tl p { font-size: 0.88rem; color: var(--text-light); line-height: 1.4; }
+@media (max-width: 768px) {
+    .steps-timeline { grid-template-columns: 1fr; gap: 1.5rem; }
+    .steps-timeline__line { display: none; }
+    .how-it-works { padding: 2rem 0; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -47,66 +248,154 @@
 </section>
 
 <!-- ==============================
-     Social Proof
+     How It Works
      ============================== -->
-<section class="social-proof" data-aos="fade-up">
+<section class="how-it-works" id="how-it-works">
     <div class="container">
-        <p class="social-proof__label">Trusted by content creators worldwide</p>
-        <div class="social-proof__logos">
-            <div class="social-proof__brand">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><polygon points="9.75 15.02 15.5 12 9.75 8.98"/><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/></svg>
-                <span>YouTube</span>
+        <div class="section__header section__header--compact" data-aos="fade-up">
+            <span class="section__badge section__badge--sticker">⚡ How It Works</span>
+            <h2 class="section__title section__title--gradient">Three simple steps. Zero hassle. 🎬</h2>
+            <p class="section__desc">From YouTube link to viral short in under a minute</p>
+        </div>
+        <div class="steps-timeline aos-stagger" data-aos="fade-up">
+            <div class="steps-timeline__line"></div>
+            <div class="step-tl">
+                <div class="step-tl__badge">1</div>
+                <div class="step-tl__emoji">🔗</div>
+                <h3>Paste a Link</h3>
+                <p>Drop any YouTube URL. We grab the video + subtitles instantly.</p>
             </div>
-            <div class="social-proof__brand">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                <span>TikTok</span>
+            <div class="step-tl">
+                <div class="step-tl__badge">2</div>
+                <div class="step-tl__emoji">🧠</div>
+                <h3>AI Finds the Gold</h3>
+                <p>Gemini AI scans for the juiciest 30-90 sec moments, auto-tagged.</p>
             </div>
-            <div class="social-proof__brand">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
-                <span>Instagram</span>
-            </div>
-            <div class="social-proof__brand">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                <span>X / Twitter</span>
-            </div>
-            <div class="social-proof__brand">
-                <span class="social-proof__badge">★★★★★ 4.9/5</span>
+            <div class="step-tl">
+                <div class="step-tl__badge">3</div>
+                <div class="step-tl__emoji">🚀</div>
+                <h3>Publish &amp; Go Viral</h3>
+                <p>Pick your format, hit generate, upload straight to YouTube. Done.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- ==============================
-     How It Works
+     YouTube Showcase
      ============================== -->
-<section class="how-it-works" id="how-it-works">
+<section class="yt-showcase" id="yt-showcase">
     <div class="container">
         <div class="section__header" data-aos="fade-up">
-            <span class="section__badge">How It Works</span>
-            <h2 class="section__title">Three simple steps</h2>
-            <p class="section__desc">From YouTube link to viral short in under a minute</p>
+            <span class="section__badge">Live on YouTube</span>
+            <h2 class="section__title">Real Shorts, Generated by ClipCraft AI</h2>
+            <p class="section__desc">These clips were created with our AI and are already live on YouTube — tap any card to watch</p>
         </div>
-        <div class="steps aos-stagger" data-aos="fade-up">
-            <div class="step">
-                <div class="step__number">1</div>
-                <div class="step__content">
-                    <h3>Paste a YouTube Link</h3>
-                    <p>Enter any YouTube video URL. ClipCraft downloads the video and subtitles automatically using yt-dlp.</p>
+        <div class="yt-showcase__scroll" data-aos="fade-up" data-aos-delay="100">
+            <a class="yt-card" href="https://youtu.be/23qk_tYHk0o" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/23qk_tYHk0o/hqdefault.jpg" alt="ClipCraft AI generated video" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
                 </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/09w5WXrAOX0" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/09w5WXrAOX0/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/OAX8mQLYSW4" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/OAX8mQLYSW4/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/70rSJRoHYXk" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/70rSJRoHYXk/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/2H5i-B3Ftzs" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/2H5i-B3Ftzs/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/7szeepOiius" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/7szeepOiius/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/nWFkOTAHP8U" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/nWFkOTAHP8U/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/bAa-g4oUhH0" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/bAa-g4oUhH0/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+            <a class="yt-card" href="https://youtube.com/shorts/oFK5VnWQTtg" target="_blank" rel="noopener">
+                <div class="yt-card__thumb">
+                    <img src="https://img.youtube.com/vi/oFK5VnWQTtg/hqdefault.jpg" alt="ClipCraft AI generated short" loading="lazy">
+                    <span class="yt-card__play">&#9658;</span>
+                </div>
+                <div class="yt-card__label">Watch on YouTube</div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     Generated Media Gallery
+     ============================== -->
+<section class="media-showcase" id="media-showcase">
+    <div class="container">
+        <div class="section__header" data-aos="fade-up">
+            <span class="section__badge">AI-Generated Content</span>
+            <h2 class="section__title">Photos &amp; Videos Created by KalisoftAI</h2>
+            <p class="section__desc">A look at real output generated by our AI pipeline</p>
+        </div>
+        <div class="media-showcase__grid aos-stagger" data-aos="fade-up" data-aos-delay="100">
+            <div class="media-card">
+                <img src="https://storage.googleapis.com/clipcraftai-storage/1.png" alt="AI-generated content sample" loading="lazy">
             </div>
-            <div class="step">
-                <div class="step__number">2</div>
-                <div class="step__content">
-                    <h3>AI Suggests Clips</h3>
-                    <p>Gemini AI analyzes the transcript and recommends the most engaging 30-90 second segments with titles and tags.</p>
-                </div>
+            <div class="media-card">
+                <img src="https://storage.googleapis.com/clipcraftai-storage/2.png" alt="AI-generated content sample" loading="lazy">
             </div>
-            <div class="step">
-                <div class="step__number">3</div>
-                <div class="step__content">
-                    <h3>Generate &amp; Publish</h3>
-                    <p>Review suggestions, choose your aspect ratio, and generate. Download or upload to YouTube instantly.</p>
-                </div>
+            <div class="media-card">
+                <img src="https://storage.googleapis.com/clipcraftai-storage/Gemini_Generated_Image_ndj3lendj3lendj3%20(2)%20(1).png" alt="AI-generated image sample" loading="lazy">
+            </div>
+            <div class="media-card">
+                <img src="https://storage.googleapis.com/clipcraftai-storage/henny%20story.jpeg" alt="AI-generated content sample" loading="lazy">
+            </div>
+            <div class="media-card media-card--video">
+                <video controls preload="metadata" playsinline>
+                    <source src="https://storage.googleapis.com/clipcraftai-storage/tajDroneshot.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-card media-card--video">
+                <video controls preload="metadata" playsinline>
+                    <source src="https://storage.googleapis.com/clipcraftai-storage/e_f_mp_.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="media-card media-card--video">
+                <video controls preload="metadata" playsinline>
+                    <source src="https://storage.googleapis.com/clipcraftai-storage/f_b_a_da_a_e_bmp_.mp4" type="video/mp4">
+                </video>
             </div>
         </div>
     </div>
@@ -170,152 +459,29 @@
 </section>
 
 <!-- ==============================
-     Product Showcase
+     YouTube Subscribe CTA
      ============================== -->
-<section class="showcase" id="showcase">
+<section class="yt-cta">
     <div class="container">
-        <div class="section__header" data-aos="fade-up">
-            <span class="section__badge">Product Showcase</span>
-            <h2 class="section__title">See it in action</h2>
-            <p class="section__desc">A clean dashboard that puts AI-powered editing at your fingertips</p>
-        </div>
-        <div class="showcase__mockup" data-aos="fade-up" data-aos-delay="100">
-            <div class="showcase__browser">
-                <div class="showcase__browser-dots">
-                    <span></span><span></span><span></span>
-                </div>
-                <div class="showcase__browser-content">
-                    <div class="dashboard-mockup">
-                        <div class="mockup__sidebar">
-                            <div class="mockup__sidebar-logo">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                            </div>
-                            <nav class="mockup__sidebar-nav">
-                                <span class="mockup__nav-item active">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                                </span>
-                                <span class="mockup__nav-item">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-                                </span>
-                                <span class="mockup__nav-item">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                </span>
-                            </nav>
-                        </div>
-                        <div class="mockup__main">
-                            <div class="mockup__header">
-                                <h3>Dashboard</h3>
-                                <div class="mockup__user">
-                                    <span class="mockup__user-avatar">SK</span>
-                                </div>
-                            </div>
-                            <div class="mockup__pastebar">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
-                                <span>Paste a YouTube URL to start...</span>
-                                <button class="mockup__pastebar-btn">Generate Shorts</button>
-                            </div>
-                            <div class="mockup__clips">
-                                <div class="mockup__clip">
-                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #6a11cb40, #2575fc40);">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
-                                    </div>
-                                    <div class="mockup__clip-info">
-                                        <div class="mockup__clip-title">Strong Opening Hook</div>
-                                        <div class="mockup__clip-meta">
-                                            <span class="mockup__clip-score"><span class="mockup__score-high">92%</span> Virality</span>
-                                            <span class="mockup__clip-duration">0:00 - 0:45</span>
-                                        </div>
-                                        <div class="mockup__clip-tags">#hook #engagement</div>
-                                    </div>
-                                </div>
-                                <div class="mockup__clip">
-                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #2575fc40, #10b98140);">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
-                                    </div>
-                                    <div class="mockup__clip-info">
-                                        <div class="mockup__clip-title">Key Insight Segment</div>
-                                        <div class="mockup__clip-meta">
-                                            <span class="mockup__clip-score"><span class="mockup__score-high">88%</span> Virality</span>
-                                            <span class="mockup__clip-duration">2:15 - 3:00</span>
-                                        </div>
-                                        <div class="mockup__clip-tags">#value #insight</div>
-                                    </div>
-                                </div>
-                                <div class="mockup__clip">
-                                    <div class="mockup__clip-thumb" style="background: linear-gradient(135deg, #10b98140, #f59e0b40);">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/></svg>
-                                    </div>
-                                    <div class="mockup__clip-info">
-                                        <div class="mockup__clip-title">Humorous Moment</div>
-                                        <div class="mockup__clip-meta">
-                                            <span class="mockup__clip-score"><span class="mockup__score-high">85%</span> Virality</span>
-                                            <span class="mockup__clip-duration">5:30 - 6:15</span>
-                                        </div>
-                                        <div class="mockup__clip-tags">#funny #relatable</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="yt-cta__box" data-aos="fade-up">
+            <div class="yt-cta__icon">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                    <path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.7 3.5 12 3.5 12 3.5s-7.7 0-9.5.6c-1 .3-1.7 1.1-2 2.1C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2.1 1.8.6 9.5.6 9.5.6s7.7 0 9.5-.6c1-.3 1.7-1.1 2-2.1.5-1.8.5-5.8.5-5.8s0-4-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/>
+                </svg>
             </div>
-            <div class="showcase__callouts">
-                <div class="showcase__callout">
-                    <span class="showcase__callout-icon">📥</span>
-                    <div><strong>One-click import</strong><br>Paste any YouTube link</div>
-                </div>
-                <div class="showcase__callout">
-                    <span class="showcase__callout-icon">🎯</span>
-                    <div><strong>AI suggestions</strong><br>Viral clip candidates</div>
-                </div>
-                <div class="showcase__callout">
-                    <span class="showcase__callout-icon">⚡</span>
-                    <div><strong>Instant generation</strong><br>FFmpeg in seconds</div>
-                </div>
+            <h2 class="yt-cta__title">Want More AI-Generated Shorts?</h2>
+            <p class="yt-cta__desc">Subscribe to our YouTube channel to see every clip ClipCraft AI creates, before anyone else.</p>
+            <div class="yt-cta__buttons">
+                <a href="https://www.youtube.com/@lazzybot108?sub_confirmation=1" target="_blank" rel="noopener" class="btn yt-cta__btn-primary">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M23.5 6.2c-.3-1-1-1.8-2-2.1C19.7 3.5 12 3.5 12 3.5s-7.7 0-9.5.6c-1 .3-1.7 1.1-2 2.1C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2.1 1.8.6 9.5.6 9.5.6s7.7 0 9.5-.6c1-.3 1.7-1.1 2-2.1.5-1.8.5-5.8.5-5.8s0-4-.5-5.8zM9.5 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+                    Subscribe on YouTube
+                </a>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- ==============================
-     AI Workflow
-     ============================== -->
-<section class="workflow" id="workflow">
-    <div class="container">
-        <div class="section__header" data-aos="fade-up">
-            <span class="section__badge">AI Workflow</span>
-            <h2 class="section__title">Powered by Gemini AI</h2>
-            <p class="section__desc">Intelligent clip selection based on viral patterns</p>
-        </div>
-        <div class="workflow__diagram aos-stagger" data-aos="fade-up">
-            <div class="workflow__node">
-                <div class="workflow__node-icon">📥</div>
-                <h4>Download</h4>
-                <p>Video + Subtitles</p>
-            </div>
-            <div class="workflow__arrow">&rarr;</div>
-            <div class="workflow__node">
-                <div class="workflow__node-icon">🧠</div>
-                <h4>Analyze</h4>
-                <p>Gemini AI</p>
-            </div>
-            <div class="workflow__arrow">&rarr;</div>
-            <div class="workflow__node">
-                <div class="workflow__node-icon">🎯</div>
-                <h4>Score</h4>
-                <p>Virality Score</p>
-            </div>
-            <div class="workflow__arrow">&rarr;</div>
-            <div class="workflow__node">
-                <div class="workflow__node-icon">✂️</div>
-                <h4>Generate</h4>
-                <p>FFmpeg Crop</p>
-            </div>
-            <div class="workflow__arrow">&rarr;</div>
-            <div class="workflow__node">
-                <div class="workflow__node-icon">☁️</div>
-                <h4>Store</h4>
-                <p>AWS S3</p>
+            <div class="yt-cta__channels">
+                <span>Our Channels:</span>
+                <a href="https://www.youtube.com/@lazzybot108" target="_blank" rel="noopener">@lazzybot108</a>
+                <span class="yt-cta__dot">&bull;</span>
+                <a href="https://www.youtube.com/@Crazyverse3" target="_blank" rel="noopener">@Crazyverse3</a>
             </div>
         </div>
     </div>
@@ -422,96 +588,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- ==============================
-     FAQ
-     ============================== -->
-<section class="faq" id="faq">
-    <div class="container">
-        <div class="section__header" data-aos="fade-up">
-            <span class="section__badge">FAQ</span>
-            <h2 class="section__title">Frequently asked questions</h2>
-        </div>
-        <div class="faq__list" data-aos="fade-up">
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>How does the AI clip selection work?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Gemini AI analyzes the video transcript for strong hooks, emotional peaks, and valuable insights, then scores each segment for viral potential on a scale of 1-10.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>What video formats are supported?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Any YouTube video with subtitles. ClipCraft downloads in MP4 format and outputs in 9:16 vertical or 16:9 horizontal aspect ratios.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Can I upload shorts directly to YouTube?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Yes. The YouTube uploader module handles OAuth authentication and publishes shorts with AI-generated titles, descriptions, and tags to your channel.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Is there a limit on video length?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>No length limit. ClipCraft processes any duration and suggests clips between 30-90 seconds for optimal short-form engagement.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Can I manually set clip boundaries?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Absolutely. You can use AI suggestions or enter custom start and end times manually for full creative control over every clip.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Is my data secure and private?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Yes. All videos are encrypted at rest on AWS S3. We never share your content or data with third parties. You can delete your videos at any time.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Can I cancel my subscription anytime?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Absolutely. No long-term contracts. Cancel anytime from your account settings. Your data remains accessible until your billing period ends.</p>
-                </div>
-            </div>
-            <div class="faq__item">
-                <button class="faq__question">
-                    <span>Do you offer a money-back guarantee?</span>
-                    <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div class="faq__answer">
-                    <p>Yes. Pro and Business plans come with a 14-day money-back guarantee. No questions asked. If ClipCraft isn't right for you, we'll refund your payment.</p>
-                </div>
-            </div>
-        </div>
-        <div class="faq__contact" data-aos="fade-up">
-            <p>Still have questions? We're here to help.</p>
-            <a href="mailto:support@clipcraft.ai">Contact our support team &rarr;</a>
         </div>
     </div>
 </section>

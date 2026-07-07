@@ -16,6 +16,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
+    path('auth/google/login/', views.google_login_view, name='google_login'),
+    path('auth/google/callback/', views.google_callback_view, name='google_callback'),
 
     # Dashboard (moved from root to avoid collision with landing)
     path('dashboard/', views.index, name='index'),

@@ -12,3 +12,4 @@ django-storages
 python-dotenv
 psycopg2-binary
 whitenoise
+httpx

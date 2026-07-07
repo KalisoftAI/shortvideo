@@ -66,26 +66,49 @@
             background-clip: text;
             color: transparent;
         }
+        .header__right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .header__user {
+            font-weight: 500;
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+        }
+        .header__usage-badge {
+            background: var(--light-gray);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            white-space: nowrap;
+        }
         h2 {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            border-bottom: 2px solid var(--medium-gray);
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--medium-gray);
             padding-bottom: 10px;
             margin-bottom: 1.5rem;
             color: var(--dark-gray);
         }
         .card {
             background: #ffffff;
-            padding: 2rem;
+            padding: 2.25rem;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            margin-bottom: 2.5rem;
-            transition: all var(--transition-speed) ease;
-        
+            margin-bottom: 2rem;
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
         }
         .card:hover {
              transform: translateY(-5px);
              box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        .card:first-of-type {
+            border-top: 4px solid transparent;
+            border-image: var(--primary-gradient) 1;
         }
 
         /* Nav Tabs & Creative Button */
@@ -171,10 +194,6 @@
         .nav-tab-creative:hover svg {
             transform: rotate(10deg);
         }
-        /* Existing h2 style, kept for other subheadings */
-        h2 { border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; font-weight: 700; margin-bottom: 1.5rem; }
-        .card { background: #fff; padding: 1.5rem 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 2.5rem; }
-
         /* --- Forms & Buttons (YouTube Bar Fixed) --- */
         .process-form { display: flex; gap: 1rem; align-items: center; }
         .process-form input[type="text"] { flex-grow: 1; padding: 14px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; }
@@ -185,6 +204,7 @@
             border-radius: var(--border-radius); cursor: pointer; text-decoration: none; transition: all 0.2s ease;
         }
         .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
         .btn:disabled { background-color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
         .btn-primary { background-color: var(--primary-color); }
         .btn-secondary { background-color: var(--secondary-color); }
@@ -199,9 +219,10 @@
         .suggestions-grid > .clip-card, .suggestions-grid > .manual-card { flex: 1 1 48%; min-width: 400px; box-sizing: border-box; }
 
         /* --- Card Base Styles --- */
-        .video-card, .short-card, .clip-card, .manual-card { display: flex; flex-direction: column; border-radius: var(--border-radius); }
+        .video-card, .short-card, .clip-card, .manual-card { display: flex; flex-direction: column; border-radius: var(--border-radius); transition: box-shadow 0.25s ease, transform 0.25s ease; }
 
         .video-card { width: 320px; background-color: var(--light-gray); }
+        .video-card:hover, .short-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
         /* Image src for S3 will be a full URL, no need for /media/ prefix in HTML.
             Django's FileField.url property will provide the complete S3 URL. */
         .video-card__thumb { width: 100%; height: 180px; object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; }
@@ -231,6 +252,8 @@
         .manual-time-inputs { display: flex; gap: 1rem; align-items: center; margin: 1rem 0; }
         .manual-time-inputs input { width: 150px; padding: 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; }
 
+        .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--secondary-color); font-size: 0.95rem; margin: 0; }
+
         @media (max-width: 768px) {
             .container { padding: 1rem; }
             .header { flex-wrap: wrap; gap: 0.5rem; }
@@ -250,6 +273,7 @@
             .horizontal-scroll-container { gap: 0.75rem; padding: 1rem 0; }
             .manual-time-inputs { flex-direction: column; }
             .manual-time-inputs input { width: 100%; }
+            .header__right { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
         }
 
         @media (max-width: 480px) {
@@ -280,6 +304,11 @@
                      M65,52.5l-20,12.5c-1.7,1.1-3.9-0.3-3.9-2.5V37.5c0-2.2,2.1-3.6,3.9-2.5l20,12.5C66.7,48.6,66.7,51.4,65,52.5z"/>
             </svg>
             <h1 class="header__title"><span>ClipCraft</span> AI</h1>
+            </div>
+            <div class="header__right">
+                <span class="header__user">Hi, {{ request.user.first_name|default:request.user.username }}</span>
+                <span class="header__usage-badge">{{ video_count }}/{{ video_limit }} videos used</span>
+                <a href="{% url 'shorts_app:logout' %}" class="btn btn-secondary">Logout</a>
             </div>
         </header>
 
@@ -325,7 +354,7 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% if not videos %}<p>No videos processed yet.</p>{% endif %}
+                {% if not videos %}<p class="empty-state">No videos processed yet.</p>{% endif %}
             </div>
         </div>
 
@@ -355,7 +384,7 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% if not shorts %}<p>No shorts have been generated yet.</p>{% endif %}
+                {% if not shorts %}<p class="empty-state">No shorts have been generated yet.</p>{% endif %}
             </div>
         </div>
     </div>
@@ -401,6 +430,12 @@
         try {
             const response = await fetch("{% url 'shorts_app:process_video' %}", { method: 'POST', body: formData, headers: {'X-CSRFToken': csrfToken} });
             const data = await response.json();
+            if (data.limit_reached) {
+                showMessageBox(data.message);
+                toggleButtonLoading(button, false);
+                showProgress('processing', false);
+                return;
+            }
             if (data.task_id) {
                 progressInterval = setInterval(() => checkProgress(data.task_id, button), 2000);
             } else { throw new Error(data.message || 'Failed to start task.'); }
