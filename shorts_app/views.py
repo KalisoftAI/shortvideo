@@ -403,6 +403,9 @@ def process_video(request):
                         'writethumbnail': True,
                         'nocolor': True,
                         'progress_hooks': [progress_hook],
+                        'cookiefile': '/home/kalisoftai22/shortvideo/cookies.txt',
+                        'ignoreerrors': True,
+                        'socket_timeout': 30,
                     }
                     with YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(url_to_process, download=True)
