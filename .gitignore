@@ -3,8 +3,9 @@ __pycache__/
 *.pyo
 *.pyd
 *.sqlite3
-#db.sqlite3
 .env
+.env.*
+!.env.example
 venv/
 *.log
 *.pot
@@ -13,3 +14,9 @@ venv/
 media/
 staticfiles/
 client_secret.json
+token.pickle
+cookies.txt
+*.pem
+*.key
+service-account*.json
+credentials*.json

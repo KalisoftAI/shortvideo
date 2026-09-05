@@ -1,14 +1,13 @@
 Django
 yt-dlp
-moviepy==1.0.3
 google-generativeai
 webvtt-py
 google-api-python-client
 google-auth-oauthlib
 gunicorn
-boto3 
-ffmpeg-python   # FFmpeg commands ko behtar handle karne ke liye
+ffmpeg-python
 django-storages
+google-cloud-storage
 python-dotenv
 psycopg2-binary
 whitenoise

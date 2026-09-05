@@ -16,8 +16,8 @@ Automatically generates YouTube Shorts from long-form YouTube videos using subti
 
 - 📥 Download YouTube videos and subtitles using `yt-dlp`
 - 🧠 Extract interesting short-form clips using Gemini AI
-- ✂️ Crop/rescale video into Shorts format (9:16 or 16:9)
-- ☁️ Upload videos to AWS S3
+- ✂️ Crop/rescale video into Shorts format (9:16 or 16:9) using FFmpeg
+- ☁️ Upload videos to Google Cloud Storage
 - 📄 Display progress and video management in the web UI
 
 ### 📌 Code Explanation
@@ -169,9 +169,9 @@ python manage.py runserver
 |-----------------|------------------------|
 | Django          | Web framework          |
 | yt-dlp          | YouTube download       |
-| MoviePy         | Video editing          |
-| Gemini AI       | Caption generation     |
-| boto3 + S3      | Cloud file storage     |
+| FFmpeg          | Video editing          |
+| Gemini AI       | Clip detection         |
+| Google Cloud Storage | Cloud file storage |
 | threading       | Async background tasks |
 
 ---
